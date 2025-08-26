@@ -1,0 +1,5 @@
+- integrate supabase
+- signup/signin
+
+- direct to add budget page open keyboard
+- navbar home, budget, profile 
