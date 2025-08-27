@@ -1,5 +1,14 @@
+
+
+- direct to add budget page open keyboard
+
 - integrate supabase
 - signup/signin
 
-- direct to add budget page open keyboard
 - navbar home, budget, profile 
+
+total amount spend and got in that day, month, year
+auto download update option 
+check for update on start option
+after signing in if data is not empty show option to sync
+a guide to setup supabase

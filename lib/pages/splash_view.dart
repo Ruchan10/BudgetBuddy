@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:budgget_buddy/core/config.dart';
 import 'package:budgget_buddy/core/listen_internet.dart';
 import 'package:budgget_buddy/core/routes.dart';
+import 'package:budgget_buddy/core/user_shared_prefs.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,8 @@ class _SplashViewState extends State<SplashView> {
   final Completer<void> _navigationCompleter = Completer<void>();
 
   Future<void> _initializeApp() async {
+    await UserSharedPrefs.init();
+
     if (_navigationCompleter.isCompleted) return;
     _navigationCompleter.complete();
 
@@ -98,10 +101,7 @@ class _SplashViewState extends State<SplashView> {
               left: 0,
               right: 0,
               child: Center(
-                child: Text(
-                  'Developed by: RK',
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: Text('Developed by: RK', style: TextStyle(fontSize: 18)),
               ),
             ),
           ],

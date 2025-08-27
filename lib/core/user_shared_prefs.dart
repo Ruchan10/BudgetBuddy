@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:budgget_buddy/models/transaction.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserSharedPrefs {
@@ -15,9 +18,32 @@ class UserSharedPrefs {
 
   static const String _keyAuthToken = 'authToken';
   static const String _keyEmail = 'email';
+  static const String _keyTransactionList = 'transactionList';
 
-  Future<void> saveToken(String token) async =>
-      await _prefs.setString(_keyAuthToken, token);
+  Future<void> saveTransactionList(List<Transaction> list) async {
+    final List<String> jsonList = list
+        .map((tx) => jsonEncode(tx.toJson()))
+        .toList();
+    await _prefs.setStringList(_keyTransactionList, jsonList);
+  }
+
+  Future<List<Transaction>> getTransactionList() async {
+    final List<String>? jsonList = _prefs.getStringList(_keyTransactionList);
+    if (jsonList == null) return [];
+    return jsonList
+        .map((txJson) => Transaction.fromJson(jsonDecode(txJson)))
+        .toList();
+  }
+
+  Future<void> addTransaction(Transaction transaction) async {
+    final currentList = await getTransactionList();
+    currentList.add(transaction);
+    await saveTransactionList(currentList);
+  }
+
+  Future<void> clearTransactionList() async {
+    await _prefs.remove(_keyTransactionList);
+  }
 
   Future<String> getToken() async => _prefs.getString(_keyAuthToken) ?? '';
 
@@ -31,5 +57,4 @@ class UserSharedPrefs {
   Future<String> getEmail() async => _prefs.getString(_keyEmail) ?? '';
 
   Future<void> deleteEmail() async => await _prefs.remove(_keyEmail);
-
 }

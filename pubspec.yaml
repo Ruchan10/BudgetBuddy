@@ -45,7 +45,6 @@ dependencies:
   url_launcher: ^6.3.2
   shared_preferences: ^2.5.3
   package_rename: ^1.7.1
-  flutter_launcher_icons: ^0.14.1
   http: ^1.5.0
 
 dev_dependencies:
@@ -105,9 +104,3 @@ package_rename_config:
   android:
     app_name: Budget Buddy
     package_name: com.rk.budgetbuddy
-
-# flutter pub run flutter_launcher_icons
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/images/logo.webp"
