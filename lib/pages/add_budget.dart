@@ -1,6 +1,8 @@
+import 'package:budgget_buddy/core/config.dart';
 import 'package:budgget_buddy/core/user_shared_prefs.dart';
 import 'package:budgget_buddy/models/transaction.dart';
 import 'package:budgget_buddy/widgets/budget_list.dart';
+import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -23,6 +25,13 @@ class AddBudgetPageState extends State<AddBudgetPage> {
   void initState() {
     super.initState();
     _loadTransactions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 5), () {
+        if (Config.getUpdateAvailable()) {
+          UpdateManager.showInstallDialog(context);
+        }
+      });
+    });
   }
 
   Future<void> _loadTransactions() async {

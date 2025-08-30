@@ -89,179 +89,190 @@ class _GroupedTransactionsListState extends State<GroupedTransactionsList> {
                           final amountColor = tx.amount < 0
                               ? Colors.red
                               : Colors.green;
+                          final isSelected = selectedId == tx.id;
 
                           return Padding(
                             padding: const EdgeInsets.only(left: 48, right: 16),
                             child: GestureDetector(
                               onTap: () {
-                                if (selectedId == tx.id) {
-                                  setState(() {
-                                    selectedId = '';
-                                  });
-                                } else {
-                                  setState(() {
-                                    selectedId = tx.id!;
-                                  });
-                                }
-                                print(selectedId);
+                                setState(() {
+                                  selectedId = isSelected ? '' : tx.id!;
+                                });
                               },
-                              child: Column(
-                                children: [
-                                  Stack(
-                                    children: [
-                                      Container(
-                                        margin: const EdgeInsets.symmetric(
-                                          vertical: 4,
-                                          horizontal: 4,
+                              child: SizedBox(
+                                height: 60,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                        horizontal: 4,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                        horizontal: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                          width: 0.8,
                                         ),
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4,
-                                          horizontal: 8,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              "- ${tx.description}",
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black87,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 4,
+                                              horizontal: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: amountColor.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              'Rs ${tx.amount.abs().toStringAsFixed(2)}',
+                                              style: TextStyle(
+                                                color: amountColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Colors.black.withValues(
+                                                alpha: 0.05,
+                                              )
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                        horizontal: 4,
+                                      ),
+                                      child: const SizedBox.expand(),
+                                    ),
+                                    AnimatedPositioned(
+                                      duration: const Duration(
+                                        milliseconds: 400,
+                                      ),
+                                      right: isSelected ? 8 : -200,
+                                      top: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.only(
+                                          right: 12,
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.white.withValues(
-                                            alpha: 0.9,
+                                            alpha: 0.6,
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.05,
-                                              ),
-                                              blurRadius: 3,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                          border: Border.all(
-                                            color: Colors.grey.shade300,
-                                            width: 0.8,
-                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         child: Row(
                                           mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                              MainAxisAlignment.end,
                                           children: [
-                                            Expanded(
-                                              child: Text(
-                                                "- ${tx.description}",
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black87,
+                                            TextButton.icon(
+                                              onPressed: () {},
+                                              icon: const Icon(
+                                                Icons.edit,
+                                                size: 14,
+                                                color: Colors.blue,
+                                              ),
+                                              label: const Text(
+                                                "Edit",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.blue,
                                                 ),
-                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              style: TextButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 8,
+                                                    ),
+                                                minimumSize: Size
+                                                    .zero, // removes Material min size
+                                                tapTargetSize: MaterialTapTargetSize
+                                                    .shrinkWrap, // no extra padding
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                backgroundColor: Colors.blue
+                                                    .withValues(alpha: 0.2),
                                               ),
                                             ),
-
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 4,
-                                                    horizontal: 8,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: amountColor.withValues(
-                                                  alpha: 0.1,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
+                                            const SizedBox(width: 6),
+                                            IconButton(
+                                              onPressed: () {},
+                                              icon: const Icon(
+                                                Icons.delete,
+                                                size: 16,
+                                                color: Colors.red,
                                               ),
-                                              child: Text(
-                                                'Rs ${tx.amount.abs().toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  color: amountColor,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
+                                              style: TextButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 8,
+                                                    ),
+                                                minimumSize: Size.zero,
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
+                                                backgroundColor: Colors.red
+                                                    .withValues(alpha: 0.2),
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      if (selectedId == tx.id) ...[
-                                        AnimatedContainer(
-                                          duration: const Duration(
-                                            milliseconds: 3000,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: selectedId == tx.id!
-                                                ? Colors.black.withValues(
-                                                    alpha: 0.05,
-                                                  )
-                                                : Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: AnimatedSlide(
-                                            duration: const Duration(
-                                              milliseconds: 300,
-                                            ),
-                                            offset: selectedId == tx.id!
-                                                ? Offset.zero
-                                                : const Offset(1.5, 0),
-                                            curve: Curves.easeOut,
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                ElevatedButton.icon(
-                                                  onPressed: () {},
-                                                  icon: const Icon(
-                                                    Icons.edit,
-                                                    size: 18,
-                                                  ),
-                                                  label: const Text("Edit"),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.blue.shade500,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          vertical: 6,
-                                                          horizontal: 12,
-                                                        ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                ElevatedButton.icon(
-                                                  onPressed: () {},
-                                                  icon: const Icon(
-                                                    Icons.delete,
-                                                    size: 18,
-                                                  ),
-                                                  label: const Text("Delete"),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.red.shade500,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          vertical: 6,
-                                                          horizontal: 12,
-                                                        ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            8,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );

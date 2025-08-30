@@ -20,10 +20,9 @@ class _SplashViewState extends State<SplashView> {
 
   Future<void> _initializeApp() async {
     await UserSharedPrefs.init();
-    Config.setAppVersion('1.0.1');
     if (_navigationCompleter.isCompleted) return;
     _navigationCompleter.complete();
-
+    UpdateManager.checkForUpdates();
     bool hasInternet = await NetworkService.checkNetwork();
     if (hasInternet) {
       Navigator.popAndPushNamed(context, AppRoute.addBudgetRoute);
