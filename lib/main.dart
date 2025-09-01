@@ -1,10 +1,11 @@
 import 'package:budgget_buddy/core/config.dart';
 import 'package:budgget_buddy/core/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  Config.setAppVersion('1.0.2');
-  runApp(const BudgetTrackerApp());
+  Config.setAppVersion('1.0.3');
+  runApp(ProviderScope(child: const BudgetTrackerApp()));
 }
 
 class AppColors {
@@ -66,7 +67,7 @@ class BudgetTrackerApp extends StatelessWidget {
           ),
         ),
       ),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       initialRoute: AppRoute.splashRoute,
       routes: AppRoute.getAppRoutes(),
     );

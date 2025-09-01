@@ -1,25 +1,26 @@
 import 'package:budgget_buddy/core/config.dart';
-import 'package:budgget_buddy/core/user_shared_prefs.dart';
 import 'package:budgget_buddy/models/transaction.dart';
+import 'package:budgget_buddy/provider/transaction_provider.dart';
 import 'package:budgget_buddy/widgets/budget_list.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
-class AddBudgetPage extends StatefulWidget {
+class AddBudgetPage extends ConsumerStatefulWidget {
   const AddBudgetPage({super.key});
 
   @override
   AddBudgetPageState createState() => AddBudgetPageState();
 }
 
-class AddBudgetPageState extends State<AddBudgetPage> {
-  final _descriptionController = TextEditingController();
+class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
+  final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   final _focusNode = FocusNode();
   final _amountFocusNode = FocusNode();
   final Uuid _uuid = Uuid();
-  List<Transaction> _transactions = [];
+  final List<Transaction> _transactions = [];
 
   @override
   void initState() {
@@ -35,40 +36,37 @@ class AddBudgetPageState extends State<AddBudgetPage> {
   }
 
   Future<void> _loadTransactions() async {
-    final prefs = UserSharedPrefs();
-    final list = await prefs.getTransactionList();
-    setState(() {
-      _transactions = list;
-    });
+    // setState(() {
+    //   _transactions = transactions;
+    // });
+    // final prefs = UserSharedPrefs();
+    // await prefs.clearTransactionList();
     _focusNode.requestFocus();
   }
 
   @override
   void dispose() {
-    _descriptionController.dispose();
+    _titleController.dispose();
     _amountController.dispose();
     super.dispose();
   }
 
   Future<void> _addTransaction() async {
-    final desc = _descriptionController.text.trim();
+    final title = _titleController.text.trim();
     final amt = double.tryParse(_amountController.text.trim());
     final id = _uuid.v4();
-    if (desc.isEmpty || amt == null) return;
+
+    if (title.isEmpty || amt == null) return;
     Transaction trans = Transaction(
-      description: desc,
+      title: title,
       amount: amt,
       date: DateTime.now(),
       id: id,
     );
-    setState(() {
-      _transactions.insert(0, trans);
-    });
 
-    _descriptionController.clear();
+    _titleController.clear();
     _amountController.clear();
-    final prefs = UserSharedPrefs();
-    await prefs.addTransaction(trans);
+    ref.read(transactionListProvider.notifier).addTransaction(trans);
   }
 
   @override
@@ -86,7 +84,11 @@ class AddBudgetPageState extends State<AddBudgetPage> {
       ),
       body: Column(
         children: [
-          Expanded(child: GroupedTransactionsList(transactions: _transactions)),
+          Expanded(
+            child: GroupedTransactionsList(
+              transactions: ref.watch(transactionListProvider),
+            ),
+          ),
 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -110,7 +112,7 @@ class AddBudgetPageState extends State<AddBudgetPage> {
                   flex: 2,
                   child: TextField(
                     focusNode: _focusNode,
-                    controller: _descriptionController,
+                    controller: _titleController,
                     decoration: InputDecoration(
                       hintText: 'Description',
                       prefixIcon: const Icon(Icons.description_outlined),
@@ -158,25 +160,25 @@ class AddBudgetPageState extends State<AddBudgetPage> {
                 const SizedBox(width: 10),
 
                 // Add Button
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.primaryColor,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.primaryColor.withValues(alpha: 0.4),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    onPressed: _addTransaction,
-                    iconSize: 20,
-                    padding: const EdgeInsets.all(8),
-                  ),
-                ),
+                // Container(
+                //   decoration: BoxDecoration(
+                //     color: theme.primaryColor,
+                //     shape: BoxShape.circle,
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: theme.primaryColor.withValues(alpha: 0.4),
+                //         blurRadius: 4,
+                //         offset: const Offset(0, 1),
+                //       ),
+                //     ],
+                //   ),
+                //   child: IconButton(
+                //     icon: const Icon(Icons.add, color: Colors.white),
+                //     onPressed: _addTransaction,
+                //     iconSize: 20,
+                //     padding: const EdgeInsets.all(8),
+                //   ),
+                // ),
               ],
             ),
           ),

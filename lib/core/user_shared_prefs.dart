@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:budgget_buddy/models/transaction.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserSharedPrefs {
@@ -38,7 +39,24 @@ class UserSharedPrefs {
   Future<void> addTransaction(Transaction transaction) async {
     final currentList = await getTransactionList();
     currentList.add(transaction);
+
     await saveTransactionList(currentList);
+    debugPrint('Transaction added: ${transaction.toJson()}');
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    final currentList = await getTransactionList();
+    currentList.removeWhere((tx) => tx.id == id);
+    await saveTransactionList(currentList);
+  }
+
+  Future<void> updateTransaction(Transaction transaction) async {
+    final currentList = await getTransactionList();
+    final index = currentList.indexWhere((tx) => tx.id == transaction.id);
+    if (index != -1) {
+      currentList[index] = transaction;
+      await saveTransactionList(currentList);
+    }
   }
 
   Future<void> clearTransactionList() async {

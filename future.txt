@@ -1,7 +1,7 @@
 
 
-- direct to add budget page open keyboard
-
+- edit delete function 
+- latest in top 
 - integrate supabase
 - signup/signin
 
