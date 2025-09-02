@@ -1,70 +1,80 @@
-import java.util.Properties
-import java.io.FileInputStream
+children: (grouped.entries.toList()
+      ..sort((a, b) => b.key.compareTo(a.key)))
+    .map((yearEntry) {
+      final year = yearEntry.key;
+      final months = yearEntry.value;
 
-plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id("dev.flutter.flutter-gradle-plugin")
-}
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Year
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              '$year',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ...(months.entries.toList()
+                ..sort((a, b) => b.key.compareTo(a.key)))
+              .map((monthEntry) {
+                final month = monthEntry.key;
+                final days = monthEntry.value;
 
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists Function() ) {
-    localPropertiesFile.reader(Charsets.UTF_8).use { reader ->
-        localProperties.load(reader)
-    }
-}
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16, bottom: 8),
+                      child: Text(
+                        DateFormat.MMM().format(DateTime(year, month)),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    ...(days.entries.toList()
+                          ..sort((a, b) => b.key.compareTo(a.key)))
+                        .map((dayEntry) {
+                          final day = dayEntry.key;
+                          final dayTxs = dayEntry.value;
 
-val flutterVersionCode = localProperties.getProperty("flutter.versionCode") ?: "1"
-val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "1.0"
-
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists Function() ) {
-    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
-}
-
-android {
-    namespace = "com.rk.budgetbuddy"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
-    defaultConfig {
-        applicationId = "com.rk.budgetbuddy"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInt()
-        versionName = flutterVersionName
-    }
-
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
-            storePassword = keystoreProperties["storePassword"] as String?
-        }
-    }
-
-    buildTypes {
-        release {
-            shrinkResources = true
-            isMinifyEnabled = true
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
-}
-
-flutter {
-    source = "../.."
-}
+                          return ValueListenableBuilder(
+                            valueListenable: selectedIdNotifier,
+                            builder: (context, selId, _) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 32),
+                                    child: Text(
+                                      '$day',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  ...(dayTxs..sort((a, b) => b.date.compareTo(a.date)))
+                                      .map((tx) {
+                                        return Text(tx.title); // replace with your widget
+                                      })
+                                      .toList(),
+                                ],
+                              );
+                            },
+                          );
+                        })
+                        .toList(),
+                  ],
+                );
+              })
+              .toList(),
+        ],
+      );
+    })
+    .toList(), // ✅ now you end with List<Widget>

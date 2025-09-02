@@ -89,7 +89,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
         child: Material(
           color: Colors.transparent,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.85,
+            width: MediaQuery.of(context).size.width * 0.95,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -131,7 +131,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
                   TextField(
                     controller: _subDescriptionController,
                     decoration: InputDecoration(
-                      labelText: 'Subdescription',
+                      labelText: 'Description',
                       filled: true,
                       fillColor: Colors.grey[100],
                       border: OutlineInputBorder(

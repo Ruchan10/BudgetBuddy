@@ -19,7 +19,8 @@ val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }}
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
 
 android {
     namespace = "com.rk.budgetbuddy"
@@ -45,17 +46,17 @@ android {
 
     signingConfigs {
         create("release") {
+            storeFile = file(keystoreProperties["storeFile"] ?: "")
+            storePassword = keystoreProperties["storePassword"] as String?
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
-            storePassword = keystoreProperties["storePassword"] as String?
         }
     }
 
     buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+        getByName("release") {
+            isMinifyEnabled = false
+            isShrinkResources = false
             signingConfig = signingConfigs.getByName("release")
         }
     }

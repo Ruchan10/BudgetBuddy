@@ -20,6 +20,15 @@ class _GroupedTransactionsListState
     extends ConsumerState<GroupedTransactionsList> {
   final prefs = UserSharedPrefs();
 
+  double totalIncoming(List<Transaction> txs) =>
+      txs.where((t) => t.amount > 0).fold(0, (sum, t) => sum + t.amount);
+
+  double totalOutgoing(List<Transaction> txs) =>
+      txs.where((t) => t.amount < 0).fold(0, (sum, t) => sum + t.amount.abs());
+
+  double totalBalance(List<Transaction> txs) =>
+      txs.fold(0, (sum, t) => sum + t.amount);
+
   @override
   Widget build(BuildContext context) {
     ValueNotifier<String> selectedIdNotifier = ValueNotifier('');
@@ -41,7 +50,9 @@ class _GroupedTransactionsListState
     return grouped.isEmpty
         ? const Center(child: Text('No transactions'))
         : ListView(
-            children: grouped.entries.map((yearEntry) {
+            children: (grouped.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
+              yearEntry,
+            ) {
               final year = yearEntry.key;
               final months = yearEntry.value;
 
@@ -59,7 +70,9 @@ class _GroupedTransactionsListState
                       ),
                     ),
                   ),
-                  ...months.entries.map((monthEntry) {
+                  ...(months.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
+                    monthEntry,
+                  ) {
                     final month = monthEntry.key;
                     final days = monthEntry.value;
 
@@ -77,10 +90,14 @@ class _GroupedTransactionsListState
                             ),
                           ),
                         ),
-                        ...days.entries.map((dayEntry) {
+                        ...(days.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
+                          dayEntry,
+                        ) {
                           final day = dayEntry.key;
                           final dayTxs = dayEntry.value;
-
+                          final dayIncoming = totalIncoming(dayTxs);
+                          final dayOutgoing = totalOutgoing(dayTxs);
+                          final dayBalance = totalBalance(dayTxs);
                           return ValueListenableBuilder(
                             valueListenable: selectedIdNotifier,
                             builder: (context, selId, child) {
@@ -90,15 +107,46 @@ class _GroupedTransactionsListState
                                   // Day
                                   Padding(
                                     padding: const EdgeInsets.only(left: 32),
-                                    child: Text(
-                                      '$day',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                    child: Row(
+                                      spacing: 16,
+                                      children: [
+                                        Text(
+                                          '$day',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              dayIncoming.toStringAsFixed(2),
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              dayOutgoing.toStringAsFixed(2),
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              dayBalance.toStringAsFixed(2),
+                                              style: TextStyle(
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  ...dayTxs.map((tx) {
+                                  ...(dayTxs..sort((a, b) => b.date.compareTo(a.date))).map((
+                                    tx,
+                                  ) {
                                     final amountColor = tx.amount < 0
                                         ? Colors.red
                                         : Colors.green;
@@ -116,8 +164,9 @@ class _GroupedTransactionsListState
                                               : tx.id!;
                                         },
                                         child: SizedBox(
-                                          height: 40,
+                                          height: 60,
                                           child: Stack(
+                                            alignment: Alignment.center,
                                             children: [
                                               Container(
                                                 margin:
@@ -156,20 +205,53 @@ class _GroupedTransactionsListState
                                                   mainAxisSize:
                                                       MainAxisSize.max,
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
+                                                      MainAxisAlignment.start,
                                                   children: [
                                                     Expanded(
-                                                      child: Text(
-                                                        "- ${tx.title}",
-                                                        style: const TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: Colors.black87,
-                                                        ),
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
+                                                      child: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            "- ${tx.title}",
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 15,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                          if (tx.description !=
+                                                              null)
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets.only(
+                                                                    top: 0,
+                                                                    left: 8,
+                                                                  ),
+                                                              child: Text(
+                                                                tx.description!,
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ],
                                                       ),
                                                     ),
 
@@ -194,8 +276,8 @@ class _GroupedTransactionsListState
                                                         style: TextStyle(
                                                           color: amountColor,
                                                           fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 12,
+                                                              FontWeight.w500,
+                                                          fontSize: 14,
                                                         ),
                                                       ),
                                                     ),
@@ -234,155 +316,170 @@ class _GroupedTransactionsListState
                                                   milliseconds: 400,
                                                 ),
                                                 right: isSelected ? 8 : -200,
-                                                top: 8,
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        right: 12,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white
-                                                        .withValues(alpha: 0.6),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
+                                                // top: 8,
+                                                child: Center(
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          right: 12,
                                                         ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    children: [
-                                                      TextButton.icon(
-                                                        onPressed: () {
-                                                          showGeneralDialog(
-                                                            context: context,
-                                                            barrierDismissible:
-                                                                true,
-                                                            barrierLabel:
-                                                                "Edit Transaction",
-                                                            transitionDuration:
-                                                                const Duration(
-                                                                  milliseconds:
-                                                                      300,
-                                                                ),
-                                                            pageBuilder:
-                                                                (
-                                                                  context,
-                                                                  animation1,
-                                                                  animation2,
-                                                                ) {
-                                                                  return EditTransactionDialog(
-                                                                    transaction:
-                                                                        tx,
-                                                                    onSave: (updatedTx) async {
-                                                                      await ref
-                                                                          .read(
-                                                                            transactionListProvider.notifier,
-                                                                          )
-                                                                          .updateTransaction(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white
+                                                          .withValues(
+                                                            alpha: 0.6,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        TextButton.icon(
+                                                          onPressed: () {
+                                                            showGeneralDialog(
+                                                              context: context,
+                                                              barrierDismissible:
+                                                                  true,
+                                                              barrierLabel:
+                                                                  "Edit Transaction",
+                                                              transitionDuration:
+                                                                  const Duration(
+                                                                    milliseconds:
+                                                                        300,
+                                                                  ),
+                                                              pageBuilder:
+                                                                  (
+                                                                    context,
+                                                                    animation1,
+                                                                    animation2,
+                                                                  ) {
+                                                                    return EditTransactionDialog(
+                                                                      transaction:
+                                                                          tx,
+                                                                      onSave:
+                                                                          (
                                                                             updatedTx,
-                                                                          );
-                                                                    },
-                                                                  );
-                                                                },
-                                                            transitionBuilder:
-                                                                (
-                                                                  context,
-                                                                  anim1,
-                                                                  anim2,
-                                                                  child,
-                                                                ) {
-                                                                  return FadeTransition(
-                                                                    opacity:
-                                                                        anim1,
-                                                                    child: ScaleTransition(
-                                                                      scale:
+                                                                          ) async {
+                                                                            await ref
+                                                                                .read(
+                                                                                  transactionListProvider.notifier,
+                                                                                )
+                                                                                .updateTransaction(
+                                                                                  updatedTx,
+                                                                                );
+                                                                          },
+                                                                    );
+                                                                  },
+                                                              transitionBuilder:
+                                                                  (
+                                                                    context,
+                                                                    anim1,
+                                                                    anim2,
+                                                                    child,
+                                                                  ) {
+                                                                    return FadeTransition(
+                                                                      opacity:
                                                                           anim1,
-                                                                      child:
-                                                                          child,
-                                                                    ),
-                                                                  );
-                                                                },
-                                                          );
-                                                        },
-                                                        icon: const Icon(
-                                                          Icons.edit,
-                                                          size: 14,
-                                                          color: Colors.blue,
-                                                        ),
-                                                        label: const Text(
-                                                          "Edit",
-                                                          style: TextStyle(
-                                                            fontSize: 12,
+                                                                      child: ScaleTransition(
+                                                                        scale:
+                                                                            anim1,
+                                                                        child:
+                                                                            child,
+                                                                      ),
+                                                                    );
+                                                                  },
+                                                            );
+                                                          },
+                                                          icon: const Icon(
+                                                            Icons.edit,
+                                                            size: 16,
                                                             color: Colors.blue,
                                                           ),
-                                                        ),
-                                                        style: TextButton.styleFrom(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                vertical: 4,
-                                                                horizontal: 8,
-                                                              ),
-                                                          minimumSize:
-                                                              Size.zero,
-                                                          tapTargetSize:
-                                                              MaterialTapTargetSize
-                                                                  .shrinkWrap,
-                                                          shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6,
-                                                                ),
+                                                          label: const Text(
+                                                            "Edit",
+                                                            style: TextStyle(
+                                                              fontSize: 14,
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
                                                           ),
-                                                          backgroundColor:
-                                                              Colors.blue
-                                                                  .withValues(
-                                                                    alpha: 0.2,
-                                                                  ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      IconButton(
-                                                        onPressed: () async {
-                                                          await ref
-                                                              .read(
-                                                                transactionListProvider
-                                                                    .notifier,
-                                                              )
-                                                              .deleteTransaction(
-                                                                tx.id!,
-                                                              );
-                                                        },
-                                                        icon: const Icon(
-                                                          Icons.delete,
-                                                          size: 16,
-                                                          color: Colors.red,
-                                                        ),
-                                                        style: TextButton.styleFrom(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                vertical: 4,
-                                                                horizontal: 8,
-                                                              ),
-                                                          minimumSize:
-                                                              Size.zero,
-                                                          tapTargetSize:
-                                                              MaterialTapTargetSize
-                                                                  .shrinkWrap,
-                                                          shape: RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  6,
+                                                          style: TextButton.styleFrom(
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  vertical: 4,
+                                                                  horizontal: 8,
                                                                 ),
-                                                          ),
-                                                          backgroundColor:
-                                                              Colors.red
-                                                                  .withValues(
-                                                                    alpha: 0.2,
+                                                            minimumSize:
+                                                                Size.zero,
+                                                            tapTargetSize:
+                                                                MaterialTapTargetSize
+                                                                    .shrinkWrap,
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6,
                                                                   ),
+                                                            ),
+                                                            backgroundColor:
+                                                                Colors.blue
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.2,
+                                                                    ),
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ],
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                        IconButton(
+                                                          onPressed: () async {
+                                                            await ref
+                                                                .read(
+                                                                  transactionListProvider
+                                                                      .notifier,
+                                                                )
+                                                                .deleteTransaction(
+                                                                  tx.id!,
+                                                                );
+                                                          },
+                                                          icon: const Icon(
+                                                            Icons.delete,
+                                                            size: 20,
+                                                            color: Colors.red,
+                                                          ),
+                                                          style: TextButton.styleFrom(
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  vertical: 4,
+                                                                  horizontal: 8,
+                                                                ),
+                                                            minimumSize:
+                                                                Size.zero,
+                                                            tapTargetSize:
+                                                                MaterialTapTargetSize
+                                                                    .shrinkWrap,
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6,
+                                                                  ),
+                                                            ),
+                                                            backgroundColor:
+                                                                Colors.red
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.2,
+                                                                    ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ),

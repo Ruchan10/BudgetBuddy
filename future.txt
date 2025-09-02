@@ -1,14 +1,12 @@
+total amount spend and got in that day, month, year
 
 
-- edit delete function 
-- latest in top 
 - integrate supabase
 - signup/signin
 
 - navbar home, budget, profile 
 - allow user to display their own currency or even hide it 
 
-total amount spend and got in that day, month, year
 auto download update option 
 check for update on start option
 after signing in if data is not empty show option to sync
