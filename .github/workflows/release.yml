@@ -8,10 +8,10 @@ on:
 
 env:
   APK_NAME: "BudgetBuddy"
-  APP_VERSION: "1.0.3"
+  APP_VERSION: "1.0.4"
   CHANGES: |
-    - Moved to riverpod
-    - edit and delete works
+    - Slight redesign
+    - Description
 
 jobs:
   build:
@@ -36,9 +36,20 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/release-key.jks
 
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=release-key.jks" >> android/key.properties
+
+      - name: Build Release APK
+        run: flutter build apk --release
+      
       - name: Rename APK with Custom Name
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/${{ env.APK_NAME }}.apk
 

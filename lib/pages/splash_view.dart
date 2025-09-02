@@ -75,7 +75,10 @@ class _SplashViewState extends State<SplashView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/images/logo.webp'),
+                  SizedBox(
+                    height: 100,
+                    child: Image.asset('assets/images/logo.webp'),
+                  ),
                   SizedBox(height: 50),
                   TickerMode(
                     enabled: ModalRoute.of(context)?.isCurrent ?? true,
