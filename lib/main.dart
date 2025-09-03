@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  Config.setAppVersion('1.0.4');
+  Config.setAppVersion('1.0.5');
   runApp(ProviderScope(child: const BudgetTrackerApp()));
 }
 
