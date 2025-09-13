@@ -19,6 +19,8 @@ class GroupedTransactionsList extends ConsumerStatefulWidget {
 class _GroupedTransactionsListState
     extends ConsumerState<GroupedTransactionsList> {
   final prefs = UserSharedPrefs();
+  Map<String, Map<String, double>> monthlyTotals = {};
+  Map<String, Map<String, double>> yearlyTotals = {};
 
   double totalIncoming(List<Transaction> txs) =>
       txs.where((t) => t.amount > 0).fold(0, (sum, t) => sum + t.amount);
@@ -31,6 +33,8 @@ class _GroupedTransactionsListState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     ValueNotifier<String> selectedIdNotifier = ValueNotifier('');
     final Map<int, Map<int, Map<int, List<Transaction>>>> grouped = {};
 
@@ -48,26 +52,121 @@ class _GroupedTransactionsListState
     }
 
     return grouped.isEmpty
-        ? const Center(child: Text('No transactions'))
+        ? Center(
+            child: Text(
+              'No transactions',
+              style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+            ),
+          )
         : ListView(
             children: (grouped.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
               yearEntry,
             ) {
               final year = yearEntry.key;
               final months = yearEntry.value;
+              late String yearKey;
+              for (var tx in transactions) {
+                final date = tx.date;
+                yearKey = "${date.year}";
+
+                yearlyTotals.putIfAbsent(
+                  yearKey,
+                  () => {"incoming": 0, "outgoing": 0, "balance": 0},
+                );
+
+                if (tx.amount > 0) {
+                  yearlyTotals[yearKey]!["incoming"] =
+                      yearlyTotals[yearKey]!["incoming"]! + tx.amount;
+                } else {
+                  yearlyTotals[yearKey]!["outgoing"] =
+                      yearlyTotals[yearKey]!["outgoing"]! + tx.amount.abs();
+                }
+
+                yearlyTotals[yearKey]!["balance"] =
+                    yearlyTotals[yearKey]!["incoming"]! -
+                    yearlyTotals[yearKey]!["outgoing"]!;
+              }
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Year
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      '$year',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    padding: const EdgeInsets.only(
+                      left: 8,
+                      right: 16,
+                      bottom: 8,
+                      top: 8,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$year',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.arrow_downward,
+                                  size: 14,
+                                  color: Colors.green,
+                                ),
+                                Text(
+                                  yearlyTotals[yearKey]!["incoming"]!
+                                      .toStringAsFixed(0),
+                                  style: TextStyle(
+                                    color: theme.textTheme.bodyMedium?.color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 16),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.arrow_upward,
+                                  size: 14,
+                                  color: Colors.red,
+                                ),
+                                Text(
+                                  yearlyTotals[yearKey]!["outgoing"]!
+                                      .toStringAsFixed(0),
+                                  style: TextStyle(
+                                    color: theme.textTheme.bodyMedium?.color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 16),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.account_balance_wallet_rounded,
+                                  size: 14,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                Text(
+                                  yearlyTotals[yearKey]!["balance"]!
+                                      .toStringAsFixed(0),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   ...(months.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
@@ -75,19 +174,111 @@ class _GroupedTransactionsListState
                   ) {
                     final month = monthEntry.key;
                     final days = monthEntry.value;
+                    late String monthKey;
+                    for (var tx in transactions) {
+                      final date = tx.date;
+                      monthKey =
+                          "${date.year}-${date.month.toString().padLeft(2, '0')}";
 
+                      monthlyTotals.putIfAbsent(
+                        monthKey,
+                        () => {"incoming": 0, "outgoing": 0, "balance": 0},
+                      );
+
+                      if (tx.amount > 0) {
+                        monthlyTotals[monthKey]!["incoming"] =
+                            monthlyTotals[monthKey]!["incoming"]! + tx.amount;
+                      } else {
+                        monthlyTotals[monthKey]!["outgoing"] =
+                            monthlyTotals[monthKey]!["outgoing"]! +
+                            tx.amount.abs();
+                      }
+
+                      monthlyTotals[monthKey]!["balance"] =
+                          monthlyTotals[monthKey]!["incoming"]! -
+                          monthlyTotals[monthKey]!["outgoing"]!;
+                    }
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Month
                         Padding(
-                          padding: const EdgeInsets.only(left: 16, bottom: 8),
-                          child: Text(
-                            DateFormat.MMM().format(DateTime(year, month)),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            bottom: 8,
+                            right: 16,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                DateFormat.MMM().format(DateTime(year, month)),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.arrow_downward,
+                                        size: 14,
+                                        color: Colors.green,
+                                      ),
+                                      Text(
+                                        monthlyTotals[monthKey]!["incoming"]!
+                                            .toStringAsFixed(0),
+                                        style: TextStyle(
+                                          color:
+                                              theme.textTheme.bodyMedium?.color,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.arrow_upward,
+                                        size: 14,
+                                        color: Colors.red,
+                                      ),
+                                      Text(
+                                        monthlyTotals[monthKey]!["outgoing"]!
+                                            .toStringAsFixed(0),
+                                        style: TextStyle(
+                                          color:
+                                              theme.textTheme.bodyMedium?.color,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.account_balance_wallet_rounded,
+                                        size: 14,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      Text(
+                                        monthlyTotals[monthKey]!["balance"]!
+                                            .toStringAsFixed(0),
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                         ...(days.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
@@ -119,25 +310,63 @@ class _GroupedTransactionsListState
                                         ),
                                         Row(
                                           children: [
-                                            Text(
-                                              dayIncoming.toStringAsFixed(2),
-                                              style: TextStyle(
-                                                color: Colors.green,
-                                              ),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.arrow_downward,
+                                                  size: 14,
+                                                  color: Colors.green,
+                                                ),
+                                                Text(
+                                                  dayIncoming.toStringAsFixed(
+                                                    0,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.green,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              dayOutgoing.toStringAsFixed(2),
-                                              style: TextStyle(
-                                                color: Colors.red,
-                                              ),
+                                            const SizedBox(width: 16),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.arrow_upward,
+                                                  size: 14,
+                                                  color: Colors.red,
+                                                ),
+                                                Text(
+                                                  dayOutgoing.toStringAsFixed(
+                                                    0,
+                                                  ),
+                                                  style: const TextStyle(
+                                                    color: Colors.red,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              dayBalance.toStringAsFixed(2),
-                                              style: TextStyle(
-                                                color: Colors.blue,
-                                              ),
+                                            const SizedBox(width: 16),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons
+                                                      .account_balance_wallet_rounded,
+                                                  size: 14,
+                                                  color:
+                                                      theme.colorScheme.primary,
+                                                ),
+                                                Text(
+                                                  dayBalance.toStringAsFixed(0),
+                                                  style: TextStyle(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .primary,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
@@ -180,15 +409,14 @@ class _GroupedTransactionsListState
                                                       horizontal: 8,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.white,
+                                                  color: theme.cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: Colors.black
-                                                          .withValues(
-                                                            alpha: 0.05,
-                                                          ),
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSurface,
                                                       blurRadius: 3,
                                                       offset: const Offset(
                                                         0,
@@ -197,7 +425,9 @@ class _GroupedTransactionsListState
                                                     ),
                                                   ],
                                                   border: Border.all(
-                                                    color: Colors.grey.shade300,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurface,
                                                     width: 0.8,
                                                   ),
                                                 ),
@@ -218,15 +448,16 @@ class _GroupedTransactionsListState
                                                         children: [
                                                           Text(
                                                             "- ${tx.title}",
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 15,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  color: Colors
-                                                                      .black87,
-                                                                ),
+                                                            style: TextStyle(
+                                                              fontSize: 15,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color: theme
+                                                                  .textTheme
+                                                                  .bodyMedium
+                                                                  ?.color,
+                                                            ),
                                                             overflow:
                                                                 TextOverflow
                                                                     .ellipsis,
@@ -242,8 +473,10 @@ class _GroupedTransactionsListState
                                                               child: Text(
                                                                 tx.description!,
                                                                 style: TextStyle(
-                                                                  color: Colors
-                                                                      .grey,
+                                                                  color: theme
+                                                                      .textTheme
+                                                                      .bodyMedium
+                                                                      ?.color,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
@@ -324,10 +557,7 @@ class _GroupedTransactionsListState
                                                           right: 12,
                                                         ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.white
-                                                          .withValues(
-                                                            alpha: 0.6,
-                                                          ),
+                                                      color: theme.cardColor,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                             8,
@@ -396,17 +626,20 @@ class _GroupedTransactionsListState
                                                                   },
                                                             );
                                                           },
-                                                          icon: const Icon(
+                                                          icon: Icon(
                                                             Icons.edit,
                                                             size: 16,
-                                                            color: Colors.blue,
+                                                            color: theme
+                                                                .colorScheme
+                                                                .primary,
                                                           ),
-                                                          label: const Text(
+                                                          label: Text(
                                                             "Edit",
                                                             style: TextStyle(
                                                               fontSize: 14,
-                                                              color:
-                                                                  Colors.blue,
+                                                              color: theme
+                                                                  .colorScheme
+                                                                  .primary,
                                                             ),
                                                           ),
                                                           style: TextButton.styleFrom(
@@ -427,7 +660,9 @@ class _GroupedTransactionsListState
                                                                   ),
                                                             ),
                                                             backgroundColor:
-                                                                Colors.blue
+                                                                theme
+                                                                    .colorScheme
+                                                                    .primary
                                                                     .withValues(
                                                                       alpha:
                                                                           0.2,

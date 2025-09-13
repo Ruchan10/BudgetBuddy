@@ -93,10 +93,10 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
+                  color: theme.cardColor.withValues(alpha: 0.08),
                   blurRadius: 6,
                   offset: const Offset(0, -2),
                 ),
@@ -113,19 +113,9 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                   child: TextField(
                     focusNode: _focusNode,
                     controller: _titleController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Description',
-                      prefixIcon: const Icon(Icons.description_outlined),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
+                      prefixIcon: Icon(Icons.description_outlined),
                     ),
                     onSubmitted: (_) => _amountFocusNode.requestFocus(),
                   ),
@@ -139,46 +129,15 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                     focusNode: _amountFocusNode,
                     controller: _amountController,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Amount',
-                      prefixIcon: const Icon(Icons.currency_rupee, size: 18),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
+                      prefixIcon: Icon(Icons.currency_rupee, size: 18),
                     ),
                     onSubmitted: (_) => _addTransaction(),
                   ),
                 ),
 
                 const SizedBox(width: 10),
-
-                // Add Button
-                // Container(
-                //   decoration: BoxDecoration(
-                //     color: theme.primaryColor,
-                //     shape: BoxShape.circle,
-                //     boxShadow: [
-                //       BoxShadow(
-                //         color: theme.primaryColor.withValues(alpha: 0.4),
-                //         blurRadius: 4,
-                //         offset: const Offset(0, 1),
-                //       ),
-                //     ],
-                //   ),
-                //   child: IconButton(
-                //     icon: const Icon(Icons.add, color: Colors.white),
-                //     onPressed: _addTransaction,
-                //     iconSize: 20,
-                //     padding: const EdgeInsets.all(8),
-                //   ),
-                // ),
               ],
             ),
           ),

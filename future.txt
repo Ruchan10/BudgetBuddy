@@ -1,5 +1,4 @@
-total amount spend and got in that day, month, year
-
+- settings page(toggle dark mode, currency symbol, signin, open keyboard by default)
 
 - integrate supabase
 - signup/signin

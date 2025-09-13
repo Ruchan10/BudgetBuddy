@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  Config.setAppVersion('1.0.5');
+  Config.setAppVersion('1.0.6');
   runApp(ProviderScope(child: const BudgetTrackerApp()));
 }
 
@@ -46,7 +46,7 @@ class BudgetTrackerApp extends StatelessWidget {
           fillColor: AppColors.lightInputBackground,
           border: OutlineInputBorder(
             borderSide: BorderSide(color: AppColors.lightBorder),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -63,11 +63,11 @@ class BudgetTrackerApp extends StatelessWidget {
           fillColor: AppColors.darkInputBackground,
           border: OutlineInputBorder(
             borderSide: BorderSide(color: AppColors.darkBorder),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
       initialRoute: AppRoute.splashRoute,
       routes: AppRoute.getAppRoutes(),
     );
