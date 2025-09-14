@@ -25,7 +25,7 @@ class _SplashViewState extends State<SplashView> {
     UpdateManager.checkForUpdates();
     bool hasInternet = await NetworkService.checkNetwork();
     if (hasInternet) {
-      Navigator.popAndPushNamed(context, AppRoute.addBudgetRoute);
+      Navigator.popAndPushNamed(context, AppRoute.navRoute);
 
       // try {
       //   final token = await UserSharedPrefs().getToken();

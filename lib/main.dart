@@ -1,10 +1,11 @@
 import 'package:budgget_buddy/core/config.dart';
 import 'package:budgget_buddy/core/routes.dart';
+import 'package:budgget_buddy/core/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  Config.setAppVersion('1.0.6');
+  Config.setAppVersion('1.0.7');
   runApp(ProviderScope(child: const BudgetTrackerApp()));
 }
 
@@ -26,11 +27,12 @@ class AppColors {
   static const darkBorder = Color(0xFF334155);
 }
 
-class BudgetTrackerApp extends StatelessWidget {
+class BudgetTrackerApp extends ConsumerWidget {
   const BudgetTrackerApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
     return MaterialApp(
       title: 'Budget Tracker',
       theme: ThemeData(
@@ -67,7 +69,7 @@ class BudgetTrackerApp extends StatelessWidget {
           ),
         ),
       ),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       initialRoute: AppRoute.splashRoute,
       routes: AppRoute.getAppRoutes(),
     );

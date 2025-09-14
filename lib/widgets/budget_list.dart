@@ -412,18 +412,18 @@ class _GroupedTransactionsListState
                                                   color: theme.cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(12),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: theme
-                                                          .colorScheme
-                                                          .onSurface,
-                                                      blurRadius: 3,
-                                                      offset: const Offset(
-                                                        0,
-                                                        2,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                  // boxShadow: [
+                                                  //   BoxShadow(
+                                                  //     color: theme
+                                                  //         .colorScheme
+                                                  //         .onSurface,
+                                                  //     // blurRadius: 3,
+                                                  //     offset: const Offset(
+                                                  //       0,
+                                                  //       2,
+                                                  //     ),
+                                                  //   ),
+                                                  // ],
                                                   border: Border.all(
                                                     color: theme
                                                         .colorScheme

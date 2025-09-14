@@ -1,3 +1,5 @@
+import 'package:budgget_buddy/pages/add_budget.dart';
+import 'package:budgget_buddy/pages/settings.dart';
 import 'package:flutter/material.dart';
 
 class DashBoardView extends StatefulWidget {
@@ -11,15 +13,18 @@ class DashBoardViewState extends State<DashBoardView> {
   final ValueNotifier<int> bottomNavNotifier = ValueNotifier<int>(0);
 
   late List<Widget> lstBottomScreen;
-  int profileIndex = 10;
 
   @override
   void initState() {
     super.initState();
-    lstBottomScreen = [];
+    lstBottomScreen = [const AddBudgetPage(), SettingsPage()];
   }
 
-  void onTabTapped(int index) {}
+  void onTabTapped(int index) {
+    setState(() {
+      bottomNavNotifier.value = index;
+    });
+  }
 
   @override
   void dispose() {
@@ -43,16 +48,14 @@ class DashBoardViewState extends State<DashBoardView> {
         selectedItemColor: theme.primaryColor,
         unselectedItemColor: theme.textTheme.bodyMedium?.color,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
             label: 'Budget',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
         ],
         onTap: onTabTapped,
       ),

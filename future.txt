@@ -1,4 +1,5 @@
 - settings page(toggle dark mode, currency symbol, signin, open keyboard by default)
+- space for navbar when keyboard is up 
 
 - integrate supabase
 - signup/signin
