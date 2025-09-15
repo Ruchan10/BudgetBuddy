@@ -1,8 +1,10 @@
 - settings page(toggle dark mode, currency symbol, signin, open keyboard by default)
 - space for navbar when keyboard is up 
+- is it possible to have literally same description, title , date time and amount, will there be issue while syncing?
 
 - integrate supabase
 - signup/signin
+- save the data from supabase to a list and when user is offline save it to another list when user comes back online sync the data and empty the later list
 
 - navbar home, budget, profile 
 - allow user to display their own currency or even hide it 

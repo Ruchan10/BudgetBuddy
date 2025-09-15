@@ -1,11 +1,11 @@
 import 'package:budgget_buddy/core/config.dart';
 import 'package:budgget_buddy/core/routes.dart';
-import 'package:budgget_buddy/core/theme_provider.dart';
+import 'package:budgget_buddy/provider/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  Config.setAppVersion('1.0.7');
+  Config.setAppVersion('1.0.8');
   runApp(ProviderScope(child: const BudgetTrackerApp()));
 }
 
