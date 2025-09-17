@@ -2,15 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:budgget_buddy/core/config.dart';
-import 'package:budgget_buddy/core/context_extension.dart';
-import 'package:budgget_buddy/core/snackbar.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateManager {
@@ -60,116 +53,6 @@ class UpdateManager {
     } finally {
       _isChecking = false;
     }
-  }
-
-  static Future<bool> requestPermission() async {
-    final status = await Permission.requestInstallPackages.request();
-    if (!status.isGranted) {
-      return false;
-    }
-    return true;
-  }
-
-  static void showInstallDialog(BuildContext context) async {
-    try {
-      int? sdkVersion;
-
-      final androidInfo = await DeviceInfoPlugin().androidInfo;
-      sdkVersion = androidInfo.version.sdkInt;
-
-      if (sdkVersion >= 26) {
-        final status = await Permission.requestInstallPackages.status;
-        if (!status.isGranted) {
-          showRequestPermission(context);
-          return;
-        }
-      }
-      showSnackBar(context: context, message: 'Downloading Update...');
-      final apkPath = await downloadApk(await _getDownloadUrl());
-
-      await OpenFile.open(apkPath);
-    } catch (e) {}
-  }
-
-  static Future<bool> showRequestPermission(BuildContext context) async {
-    if (Config.getIsUpdateDialogopen()) {
-      return false;
-    }
-    Config.setIsUpdateDialogopen(true);
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Update Available",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: context.widthDivisor(64),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: context.heightDivisor(90)),
-              Text(
-                'To install this update allow installation permission',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: context.widthDivisor(106)),
-              ),
-              Text(
-                'You only need to do this once',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: context.widthDivisor(150)),
-              ),
-            ],
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton(
-                  onPressed: () {
-                    try {
-                      Navigator.of(context).pop();
-
-                      Future.delayed(Duration(milliseconds: 300), () {
-                        Config.setIsUpdateDialogopen(false);
-                      });
-                    } catch (e) {
-                      Config.setIsUpdateDialogopen(false);
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: Text(
-                    "Cancel",
-                    style: TextStyle(fontSize: context.widthDivisor(135)),
-                  ),
-                ),
-                SizedBox(width: context.widthDivisor(170)),
-                FilledButton(
-                  onPressed: () {
-                    requestPermission().then((value) {
-                      if (value) {
-                        showInstallDialog(context);
-                      }
-                    });
-                    Config.setIsUpdateDialogopen(false);
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(
-                    "Allow",
-                    style: TextStyle(fontSize: context.widthDivisor(135)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-    return true;
   }
 
   static Future<void> showUpdateDialog(BuildContext context) async {
@@ -270,27 +153,21 @@ class _UpdateDialog extends StatelessWidget {
           Text(
             "Update Available",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: context.widthDivisor(64),
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: context.heightDivisor(90)),
+          SizedBox(height: 16),
           Text(
             'V$latestVersion',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: context.widthDivisor(106)),
+            style: TextStyle(fontSize: 16),
           ),
-          SizedBox(height: context.heightDivisor(90)),
+          SizedBox(height: 16),
           ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.4,
             ),
             child: SingleChildScrollView(
-              child: Text(
-                releaseNotes,
-                style: TextStyle(fontSize: context.widthDivisor(89)),
-              ),
+              child: Text(releaseNotes, style: TextStyle(fontSize: 16)),
             ),
           ),
         ],
@@ -302,40 +179,16 @@ class _UpdateDialog extends StatelessWidget {
           children: [
             OutlinedButton(
               onPressed: onCancel,
-              child: Text(
-                "Cancel",
-                style: TextStyle(fontSize: context.widthDivisor(135)),
-              ),
+              child: Text("Cancel", style: TextStyle(fontSize: 16)),
             ),
-            SizedBox(width: context.widthDivisor(170)),
+            SizedBox(width: 16),
             FilledButton(
               onPressed: onDownload,
-              child: Text(
-                "Download",
-                style: TextStyle(fontSize: context.widthDivisor(135)),
-              ),
+              child: Text("Download", style: TextStyle(fontSize: 16)),
             ),
           ],
         ),
       ],
     );
   }
-}
-
-Future<String> downloadApk(String url) async {
-  final dir = await getTemporaryDirectory();
-  final apkPath = '${dir.path}/update.apk';
-
-  final dio = Dio();
-  await dio.download(
-    url,
-    apkPath,
-    onReceiveProgress: (received, total) {
-      if (total != -2) {
-        print("Downloading: ${(received / total * 100).toStringAsFixed(0)}%");
-      }
-    },
-  );
-
-  return apkPath;
 }

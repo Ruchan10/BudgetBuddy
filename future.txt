@@ -1,5 +1,5 @@
-- settings page(toggle dark mode, currency symbol, signin, open keyboard by default)
-- space for navbar when keyboard is up 
+- settings page(toggle dark mode, currency symbol, signin, open keyboard by default check boxcheck for update on start option, defautl landing page, about section, donate section  )
+ - dark mode not perfect 
 - is it possible to have literally same description, title , date time and amount, will there be issue while syncing?
 
 - integrate supabase

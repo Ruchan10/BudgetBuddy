@@ -71,8 +71,10 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
 
   void _save() {
     final updatedTx = widget.transaction.copyWith(
-      title: _titleController.text,
-      description: _subDescriptionController.text,
+      title: _titleController.text.trim(),
+      description: _subDescriptionController.text.trim() == ''
+          ? null
+          : _subDescriptionController.text.trim(),
       amount:
           double.tryParse(_amountController.text) ?? widget.transaction.amount,
       date: _selectedDate,
@@ -83,16 +85,17 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Material(
-          color: Colors.transparent,
           child: Container(
             width: MediaQuery.of(context).size.width * 0.95,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -102,102 +105,115 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
                 ),
               ],
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Edit Transaction',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      labelText: 'Title',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
+            child: AnimatedPadding(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Edit Transaction',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _subDescriptionController,
-                    decoration: InputDecoration(
-                      labelText: 'Description',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        labelText: 'Title',
+                        filled: true,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: 'Amount',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _subDescriptionController,
+                      decoration: InputDecoration(
+                        labelText: 'Description',
+                        filled: true,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text(
-                        'Date: ${DateFormat.yMMMd().format(_selectedDate)}',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
-                      const SizedBox(width: 12),
-                      TextButton(
-                        onPressed: _pickDate,
-                        child: const Text('Change Date'),
+                      decoration: InputDecoration(
+                        labelText: 'Amount',
+                        filled: true,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Text(
+                          'Date: ${DateFormat.yMMMd().format(_selectedDate)}',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: _save,
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: _pickDate,
+                          child: const Text('Change Date'),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 20,
+                            vertical: 16,
+                            horizontal: 12,
+                          ),
+                          alignment: Alignment.centerLeft,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          side: BorderSide(color: theme.dividerColor),
+                        ),
+                        onPressed: _pickDate,
+                        child: Text(
+                          DateFormat.yMMMd().format(_selectedDate),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        child: const Text('Save'),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: _save,
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 20,
+                            ),
+                          ),
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

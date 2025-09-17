@@ -8,9 +8,11 @@ on:
 
 env:
   APK_NAME: "BudgetBuddy"
-  APP_VERSION: "1.0.8"
+  APP_VERSION: "1.0.9"
   CHANGES: |
-    - Started working on supabase integration
+    - Check Update Fix
+    - '+' and '-' sign added in amount 
+    - spacing above keyboard removed 
     - Misc Changes
 
 jobs:

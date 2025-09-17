@@ -19,8 +19,6 @@ class GroupedTransactionsList extends ConsumerStatefulWidget {
 class _GroupedTransactionsListState
     extends ConsumerState<GroupedTransactionsList> {
   final prefs = UserSharedPrefs();
-  Map<String, Map<String, double>> monthlyTotals = {};
-  Map<String, Map<String, double>> yearlyTotals = {};
 
   double totalIncoming(List<Transaction> txs) =>
       txs.where((t) => t.amount > 0).fold(0, (sum, t) => sum + t.amount);
@@ -62,6 +60,8 @@ class _GroupedTransactionsListState
             children: (grouped.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
               yearEntry,
             ) {
+              Map<String, Map<String, double>> yearlyTotals = {};
+
               final year = yearEntry.key;
               final months = yearEntry.value;
               late String yearKey;
@@ -122,7 +122,7 @@ class _GroupedTransactionsListState
                                   yearlyTotals[yearKey]!["incoming"]!
                                       .toStringAsFixed(0),
                                   style: TextStyle(
-                                    color: theme.textTheme.bodyMedium?.color,
+                                    color: Colors.green,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -140,7 +140,7 @@ class _GroupedTransactionsListState
                                   yearlyTotals[yearKey]!["outgoing"]!
                                       .toStringAsFixed(0),
                                   style: TextStyle(
-                                    color: theme.textTheme.bodyMedium?.color,
+                                    color: Colors.red,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -172,6 +172,8 @@ class _GroupedTransactionsListState
                   ...(months.entries.toList()..sort((a, b) => b.key.compareTo(a.key))).map((
                     monthEntry,
                   ) {
+                    Map<String, Map<String, double>> monthlyTotals = {};
+
                     final month = monthEntry.key;
                     final days = monthEntry.value;
                     late String monthKey;
@@ -232,8 +234,7 @@ class _GroupedTransactionsListState
                                         monthlyTotals[monthKey]!["incoming"]!
                                             .toStringAsFixed(0),
                                         style: TextStyle(
-                                          color:
-                                              theme.textTheme.bodyMedium?.color,
+                                          color: Colors.green,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -251,8 +252,7 @@ class _GroupedTransactionsListState
                                         monthlyTotals[monthKey]!["outgoing"]!
                                             .toStringAsFixed(0),
                                         style: TextStyle(
-                                          color:
-                                              theme.textTheme.bodyMedium?.color,
+                                          color: Colors.red,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -412,18 +412,7 @@ class _GroupedTransactionsListState
                                                   color: theme.cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(12),
-                                                  // boxShadow: [
-                                                  //   BoxShadow(
-                                                  //     color: theme
-                                                  //         .colorScheme
-                                                  //         .onSurface,
-                                                  //     // blurRadius: 3,
-                                                  //     offset: const Offset(
-                                                  //       0,
-                                                  //       2,
-                                                  //     ),
-                                                  //   ),
-                                                  // ],
+
                                                   border: Border.all(
                                                     color: theme
                                                         .colorScheme
@@ -463,7 +452,10 @@ class _GroupedTransactionsListState
                                                                     .ellipsis,
                                                           ),
                                                           if (tx.description !=
-                                                              null)
+                                                                  null &&
+                                                              tx
+                                                                  .description!
+                                                                  .isNotEmpty)
                                                             Padding(
                                                               padding:
                                                                   const EdgeInsets.only(

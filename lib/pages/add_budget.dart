@@ -20,7 +20,7 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
   final _focusNode = FocusNode();
   final _amountFocusNode = FocusNode();
   final Uuid _uuid = Uuid();
-  final List<Transaction> _transactions = [];
+  bool _isPositive = false;
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(seconds: 5), () {
         if (Config.getUpdateAvailable()) {
-          UpdateManager.showInstallDialog(context);
+          UpdateManager.showUpdateDialog(context);
         }
       });
     });
@@ -54,12 +54,14 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
   Future<void> _addTransaction() async {
     final title = _titleController.text.trim();
     final amt = double.tryParse(_amountController.text.trim());
+    if (amt == null) return;
+    final signedAmt = _isPositive ? amt : -amt;
     final id = _uuid.v4();
 
-    if (title.isEmpty || amt == null) return;
+    if (title.isEmpty) return;
     Transaction trans = Transaction(
       title: title,
-      amount: amt,
+      amount: signedAmt,
       date: DateTime.now(),
       id: id,
     );
@@ -72,7 +74,15 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomNavHeight = kBottomNavigationBarHeight;
+    final bottomPadding = (keyboardInset - bottomNavHeight).clamp(
+      0.0,
+      double.infinity,
+    );
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(
           'Budget',
@@ -106,39 +116,80 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                 topRight: Radius.circular(18),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    focusNode: _focusNode,
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      hintText: 'Description',
-                      prefixIcon: Icon(Icons.description_outlined),
+            child: AnimatedPadding(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextField(
+                      focusNode: _focusNode,
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        hintText: 'Description',
+                        prefixIcon: Icon(Icons.description_outlined),
+                      ),
+                      onSubmitted: (_) => _amountFocusNode.requestFocus(),
                     ),
-                    onSubmitted: (_) => _amountFocusNode.requestFocus(),
                   ),
-                ),
 
-                const SizedBox(width: 10),
+                  const SizedBox(width: 10),
 
-                Expanded(
-                  flex: 1,
-                  child: TextField(
-                    focusNode: _amountFocusNode,
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: 'Amount',
-                      prefixIcon: Icon(Icons.currency_rupee, size: 18),
+                  Expanded(
+                    flex: 1,
+                    child: TextField(
+                      focusNode: _amountFocusNode,
+                      controller: _amountController,
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        if (value.startsWith('-')) {
+                          _isPositive = !_isPositive;
+                        }
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Amount',
+                        prefixIcon: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isPositive = !_isPositive;
+                            });
+                          },
+                          child: Container(
+                            alignment: Alignment.center,
+                            width: 40,
+                            child: Text(
+                              _isPositive ? "+" : "-",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: _isPositive ? Colors.green : Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: _isPositive ? Colors.green : Colors.red,
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: _isPositive ? Colors.green : Colors.red,
+                            width: 2.5,
+                          ),
+                        ),
+                      ),
+                      onSubmitted: (_) => _addTransaction(),
                     ),
-                    onSubmitted: (_) => _addTransaction(),
                   ),
-                ),
 
-                const SizedBox(width: 10),
-              ],
+                  const SizedBox(width: 10),
+                ],
+              ),
             ),
           ),
         ],

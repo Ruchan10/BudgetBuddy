@@ -1,7 +1,7 @@
 class Config {
   static bool _updateAvaliable = false;
   static bool _isUpdateDialogOpen = false;
-  static String _appVersion = '9.9.9';
+  static String _appVersion = '1.0.9';
   static bool _hasInternet = false;
   static String _apkUrl = '';
   static String _newVersion = '';
