@@ -143,10 +143,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
           FilledButton.icon(
             onPressed: () {
-              showSnackBar(
-                context: context,
-                message: "Attempting to sync with Supabase...",
-              );
+              showSnackBar(context: context, message: "Coming soon...");
             },
             icon: Icon(Icons.cloud_upload),
             label: Text("Sign Up & Sync"),

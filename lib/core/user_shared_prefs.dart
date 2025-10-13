@@ -20,6 +20,7 @@ class UserSharedPrefs {
   static const String _keyAuthToken = 'authToken';
   static const String _keyEmail = 'email';
   static const String _keyTransactionList = 'transactionList';
+  static const String _keyStartingBalance = 'startingBalance';
 
   Future<void> saveTransactionList(List<Transaction> list) async {
     final List<String> jsonList = list
@@ -75,4 +76,13 @@ class UserSharedPrefs {
   Future<String> getEmail() async => _prefs.getString(_keyEmail) ?? '';
 
   Future<void> deleteEmail() async => await _prefs.remove(_keyEmail);
+
+  Future<void> saveStartingBalance(double balance) async =>
+      await _prefs.setDouble(_keyStartingBalance, balance);
+
+  Future<double> getStartingBalance() async => _prefs.getDouble(_keyStartingBalance) ?? 0.0;
+
+  Future<bool> hasStartingBalance() async => _prefs.containsKey(_keyStartingBalance);
+
+  Future<void> deleteStartingBalance() async => await _prefs.remove(_keyStartingBalance);
 }

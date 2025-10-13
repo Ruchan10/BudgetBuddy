@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:budgget_buddy/core/config.dart';
-import 'package:budgget_buddy/core/listen_internet.dart';
 import 'package:budgget_buddy/core/routes.dart';
 import 'package:budgget_buddy/core/user_shared_prefs.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
@@ -23,27 +22,28 @@ class _SplashViewState extends State<SplashView> {
     if (_navigationCompleter.isCompleted) return;
     _navigationCompleter.complete();
     UpdateManager.checkForUpdates();
-    bool hasInternet = await NetworkService.checkNetwork();
-    if (hasInternet) {
-      Navigator.popAndPushNamed(context, AppRoute.navRoute);
-
-      // try {
-      //   final token = await UserSharedPrefs().getToken();
-      //   if (token.trim().isNotEmpty) {
-      //     if (!mounted) return;
-      //     Navigator.popAndPushNamed(context, AppRoute.addBudgetRoute);
-      //   } else {
-      //     if (!mounted) return;
-      //     Navigator.popAndPushNamed(context, AppRoute.loginRoute);
-      //   }
-      // } catch (e) {
-      //   if (!mounted) return;
-      //   Navigator.popAndPushNamed(context, AppRoute.loginRoute);
-      // }
-    } else {
+    // Check if user has set starting balance
+    bool hasBalance = await UserSharedPrefs().hasStartingBalance();
+    if (!hasBalance) {
       if (!mounted) return;
-      Navigator.popAndPushNamed(context, AppRoute.noInternetRoute);
+      Navigator.popAndPushNamed(context, AppRoute.startingBalanceRoute);
+      return;
     }
+    Navigator.popAndPushNamed(context, AppRoute.navRoute);
+
+    // try {
+    //   final token = await UserSharedPrefs().getToken();
+    //   if (token.trim().isNotEmpty) {
+    //     if (!mounted) return;
+    //     Navigator.popAndPushNamed(context, AppRoute.addBudgetRoute);
+    //   } else {
+    //     if (!mounted) return;
+    //     Navigator.popAndPushNamed(context, AppRoute.loginRoute);
+    //   }
+    // } catch (e) {
+    //   if (!mounted) return;
+    //   Navigator.popAndPushNamed(context, AppRoute.loginRoute);
+    // }
   }
 
   @override

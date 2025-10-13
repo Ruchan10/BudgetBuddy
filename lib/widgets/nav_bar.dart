@@ -1,4 +1,5 @@
 import 'package:budgget_buddy/pages/add_budget.dart';
+import 'package:budgget_buddy/pages/analytics.dart';
 import 'package:budgget_buddy/pages/settings.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,7 @@ class DashBoardViewState extends State<DashBoardView> {
   @override
   void initState() {
     super.initState();
-    lstBottomScreen = [const AddBudgetPage(), SettingsPage()];
+    lstBottomScreen = [const AddBudgetPage(), const AnalyticsPage(), SettingsPage()];
   }
 
   void onTabTapped(int index) {
@@ -51,6 +52,10 @@ class DashBoardViewState extends State<DashBoardView> {
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
             label: 'Budget',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics),
+            label: 'Analytics',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

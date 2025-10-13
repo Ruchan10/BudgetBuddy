@@ -1,6 +1,8 @@
+- allow editing starting transaction but how?
+- add a category to the transaction
 - settings page(toggle dark mode, currency symbol, signin, open keyboard by default check boxcheck for update on start option, defautl landing page, about section, donate section  )
  - dark mode not perfect 
-- is it possible to have literally same description, title , date time and amount, will there be issue while syncing?
+
 
 - integrate supabase
 - signup/signin
@@ -8,8 +10,10 @@
 
 - navbar home, budget, profile 
 - allow user to display their own currency or even hide it 
+- category section (if possible AI?) then display charts based on the category 
 
 auto download update option 
 check for update on start option
 after signing in if data is not empty show option to sync
 a guide to setup supabase
+- is it possible to have literally same description, title , date time and amount, will there be issue while syncing? -> yes identify by id

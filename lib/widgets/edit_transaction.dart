@@ -151,19 +151,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Text(
-                          'Date: ${DateFormat.yMMMd().format(_selectedDate)}',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(width: 12),
-                        TextButton(
-                          onPressed: _pickDate,
-                          child: const Text('Change Date'),
-                        ),
-                      ],
-                    ),
+
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(

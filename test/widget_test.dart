@@ -1,53 +1,22 @@
-class DashBoardViewState extends State<DashBoardView> {
-  final ValueNotifier<int> bottomNavNotifier = ValueNotifier<int>(0);
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-  late final List<Widget> pages;
+void main() {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    // Replace this with your actual test implementation
+    await tester.pumpWidget(const MaterialApp(home: Placeholder()));
 
-  @override
-  void initState() {
-    super.initState();
-    pages = [
-      const AddBudgetContent(), // <-- now a content widget, not a Scaffold
-      const SettingsPageContent(), // adjust similarly
-    ];
-  }
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final index = bottomNavNotifier.value;
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true, // important
-      appBar: AppBar(
-        title: Text(index == 0 ? 'Budget' : 'Settings',
-            style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 2,
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: IndexedStack(
-          index: index,
-          children: pages,
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: index,
-        selectedItemColor: theme.primaryColor,
-        unselectedItemColor: theme.textTheme.bodyMedium?.color,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Budget',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-        onTap: (i) => setState(() => bottomNavNotifier.value = i),
-      ),
-    );
-  }
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
+  });
 }
