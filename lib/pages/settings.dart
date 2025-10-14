@@ -1,7 +1,9 @@
 import 'package:budgget_buddy/core/config.dart';
 import 'package:budgget_buddy/core/snackbar.dart';
 import 'package:budgget_buddy/main.dart';
+import 'package:budgget_buddy/provider/category_provider.dart';
 import 'package:budgget_buddy/provider/theme_provider.dart';
+import 'package:budgget_buddy/widgets/add_edit_category.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,6 +60,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final themeMode = ref.watch(themeProvider);
     final isDark = themeMode == ThemeMode.dark;
     final updateAvailable = Config.getUpdateAvailable();
+    final categories = ref.watch(categoryListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -97,6 +100,81 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onChanged: (value) {
               ref.read(themeProvider.notifier).toggleTheme(value);
             },
+          ),
+
+          const Divider(),
+
+          ExpansionTile(
+            title: const Text(
+              'Categories',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            children: [
+              // List of categories with cards for better UI
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Color(int.parse(cat.color)),
+                        child: Text(cat.icon),
+                      ),
+                      title: Text(
+                        cat.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => showCategoryEditorDialog(
+                              context,
+                              ref,
+                              existingCategory: cat,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              ref
+                                  .read(categoryListProvider.notifier)
+                                  .deleteCategory(cat.name);
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Category deleted')),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () => showCategoryEditorDialog(context, ref),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add New Category'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
           const Divider(),

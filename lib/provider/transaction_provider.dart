@@ -1,4 +1,6 @@
+
 import 'package:budgget_buddy/core/user_shared_prefs.dart';
+import 'package:budgget_buddy/models/category.dart';
 import 'package:budgget_buddy/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ final transactionListProvider =
     });
 
 class TransactionNotifier extends StateNotifier<List<Transaction>> {
+  List<Category> categories = [];
   TransactionNotifier() : super([]) {
     _loadTransactions();
   }

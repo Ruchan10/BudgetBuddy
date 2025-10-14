@@ -8,12 +8,11 @@ on:
 
 env:
   APK_NAME: "BudgetBuddy"
-  APP_VERSION: "1.1.0"
+  APP_VERSION: "1.1.1"
   CHANGES: |
-    - Add starting balance screen
-    - Analytics page
+    - Category system in progress
     - Misc Changes
-
+    
 jobs:
   build:
     name: Build APK

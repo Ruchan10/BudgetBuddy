@@ -1,14 +1,16 @@
+import 'package:budgget_buddy/models/category.dart';
 import 'package:flutter/material.dart';
 
 class Transaction {
   final String title;
-  final String? description;
+  final Category? category;
   final double amount;
   final DateTime date;
   final String? id;
+
   Transaction({
     required this.title,
-    this.description,
+    this.category,
     required this.amount,
     required this.date,
     this.id,
@@ -16,7 +18,7 @@ class Transaction {
 
   Map<String, dynamic> toJson() => {
     'title': title,
-    'description': description,
+    'category': category,
     'amount': amount,
     'date': date.toIso8601String(),
     'id': id,
@@ -26,7 +28,7 @@ class Transaction {
     debugPrint('Transaction from JSON: ${json.toString()}');
     return Transaction(
       title: json['title'] as String,
-      description: json['description'] as String?,
+      category: json['category'] as Category?,
       amount: (json['amount'] as num).toDouble(),
       date: DateTime.parse(json['date'] as String),
       id: json['id'] as String?,
@@ -36,14 +38,14 @@ class Transaction {
   Transaction copyWith({
     String? id,
     String? title,
-    String? description,
+    Category? category,
     double? amount,
     DateTime? date,
   }) {
     return Transaction(
       id: id ?? this.id,
       title: title ?? this.title,
-      description: description ?? this.description,
+      category: category ?? this.category,
       amount: amount ?? this.amount,
       date: date ?? this.date,
     );

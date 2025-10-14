@@ -30,7 +30,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
     super.initState();
     _titleController = TextEditingController(text: widget.transaction.title);
     _subDescriptionController = TextEditingController(
-      text: widget.transaction.description ?? '',
+      text: widget.transaction.category?.name ?? '',
     );
     _amountController = TextEditingController(
       text: widget.transaction.amount.toString(),
@@ -72,9 +72,14 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
   void _save() {
     final updatedTx = widget.transaction.copyWith(
       title: _titleController.text.trim(),
-      description: _subDescriptionController.text.trim() == ''
-          ? null
-          : _subDescriptionController.text.trim(),
+      // category: _subDescriptionController.text.trim() == ''
+      //     ? null
+      //     : Category(
+      //         id: widget.transaction.category?.id,
+      //         name: _subDescriptionController.text.trim(),
+      //         icon: widget.transaction.category?.icon,
+      //         color: widget.transaction.category?.color,
+      //       ),
       amount:
           double.tryParse(_amountController.text) ?? widget.transaction.amount,
       date: _selectedDate,
@@ -125,6 +130,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
                     ),
                     const SizedBox(height: 16),
                     TextField(
+                      readOnly: widget.transaction.id == "01",
                       controller: _titleController,
                       decoration: InputDecoration(
                         labelText: 'Title',

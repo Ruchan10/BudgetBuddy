@@ -1,22 +1,11 @@
+import 'package:budgget_buddy/models/category.dart';
+import 'package:budgget_buddy/provider/category_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_iconpicker/Models/configuration.dart';
+import 'package:flutter_iconpicker/flutter_iconpicker.dart';
+import 'package:flutter_iconpicker/flutter_iconpicker.dart'
+    as FlutterIconPicker;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    // Replace this with your actual test implementation
-    await tester.pumpWidget(const MaterialApp(home: Placeholder()));
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
-}
+// ... (rest of your imports and function signature remain the same)

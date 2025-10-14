@@ -451,11 +451,11 @@ class _GroupedTransactionsListState
                                                                 TextOverflow
                                                                     .ellipsis,
                                                           ),
-                                                          if (tx.description !=
+                                                          if (tx.category !=
                                                                   null &&
                                                               tx
-                                                                  .description!
-                                                                  .isNotEmpty)
+                                                                  .category!
+                                                                  .name.isNotEmpty)
                                                             Padding(
                                                               padding:
                                                                   const EdgeInsets.only(
@@ -463,7 +463,7 @@ class _GroupedTransactionsListState
                                                                     left: 8,
                                                                   ),
                                                               child: Text(
-                                                                tx.description!,
+                                                                tx.category!.name,
                                                                 style: TextStyle(
                                                                   color: theme
                                                                       .textTheme

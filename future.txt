@@ -1,4 +1,3 @@
-- allow editing starting transaction but how?
 - add a category to the transaction
 - settings page(toggle dark mode, currency symbol, signin, open keyboard by default check boxcheck for update on start option, defautl landing page, about section, donate section  )
  - dark mode not perfect 

@@ -613,7 +613,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

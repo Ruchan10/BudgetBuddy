@@ -58,7 +58,7 @@ class _StartingBalancePageState extends ConsumerState<StartingBalancePage>
         title: "Starting Balance",
         amount: double.parse(_balanceController.text),
         date: DateTime.now(),
-        id: _uuid.v4(),
+        id: "01",
       );
 
       _balanceController.clear();

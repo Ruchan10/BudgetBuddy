@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:budgget_buddy/models/category.dart';
 import 'package:budgget_buddy/models/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ class UserSharedPrefs {
   static const String _keyEmail = 'email';
   static const String _keyTransactionList = 'transactionList';
   static const String _keyStartingBalance = 'startingBalance';
+  static const String _keyCategoryList = 'categoryList';
 
   Future<void> saveTransactionList(List<Transaction> list) async {
     final List<String> jsonList = list
@@ -85,4 +87,19 @@ class UserSharedPrefs {
   Future<bool> hasStartingBalance() async => _prefs.containsKey(_keyStartingBalance);
 
   Future<void> deleteStartingBalance() async => await _prefs.remove(_keyStartingBalance);
+
+  Future<void> saveCategoryList(List<Category> list) async {
+    final List<String> jsonList = list
+        .map((cat) => jsonEncode(cat.toJson()))
+        .toList();
+    await _prefs.setStringList(_keyCategoryList, jsonList);
+  }
+
+  Future<List<Category>> getCategoryList() async {
+    final List<String>? jsonList = _prefs.getStringList(_keyCategoryList);
+    if (jsonList == null) return [];
+    return jsonList
+        .map((catJson) => Category.fromJson(jsonDecode(catJson)))
+        .toList();
+  }
 }
