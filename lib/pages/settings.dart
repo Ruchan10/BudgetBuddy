@@ -6,6 +6,7 @@ import 'package:budgget_buddy/provider/theme_provider.dart';
 import 'package:budgget_buddy/widgets/add_edit_category.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_iconpicker/Serialization/icondata_serialization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -124,8 +125,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Color(int.parse(cat.color)),
-                        child: Text(cat.icon),
+                        backgroundColor: Color(
+                          int.parse('0xff${cat.color.replaceFirst('#', '')}'),
+                        ),
+                        child: deserializeIcon(cat.icon) != null
+                            ? Icon(deserializeIcon(cat.icon)!.data)
+                            : Icon(Icons.category),
                       ),
                       title: Text(
                         cat.name,

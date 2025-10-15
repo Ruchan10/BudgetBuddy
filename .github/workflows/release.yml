@@ -8,11 +8,10 @@ on:
 
 env:
   APK_NAME: "BudgetBuddy"
-  APP_VERSION: "1.1.1"
+  APP_VERSION: "1.1.2"
   CHANGES: |
     - Category system in progress
-    - Misc Changes
-    
+
 jobs:
   build:
     name: Build APK
@@ -48,7 +47,7 @@ jobs:
           echo "storeFile=my-release-key.jks" >> android/key.properties
         
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
       
       - name: Rename APK with Custom Name
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/${{ env.APK_NAME }}.apk

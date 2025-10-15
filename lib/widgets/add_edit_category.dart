@@ -18,13 +18,14 @@ Future<void> showCategoryEditorDialog(
   final nameController = TextEditingController(
     text: existingCategory?.name ?? '',
   );
-  IconData? selectedIcon =
+  IconPickerIcon? selectedIcon =
       existingCategory != null && existingCategory.icon.isNotEmpty
-      ? IconData(
-          int.tryParse(existingCategory.icon) ?? Icons.category.codePoint,
-          fontFamily: 'MaterialIcons',
-        )
-      : Icons.category; // Default fallback
+      ? deserializeIcon(existingCategory.icon)
+      : IconPickerIcon(
+          name: 'category',
+          data: Icons.category,
+          pack: IconPack.allMaterial.name,
+        );
   Color selectedColor = existingCategory != null
       ? Color(int.parse('0xff${existingCategory.color.replaceFirst('#', '')}'))
       : Colors.blue;
@@ -84,7 +85,7 @@ Future<void> showCategoryEditorDialog(
                       ),
                       child: ListTile(
                         leading: Icon(
-                          selectedIcon,
+                          selectedIcon?.data,
                           color: selectedColor,
                           size: 28,
                         ),
@@ -99,20 +100,29 @@ Future<void> showCategoryEditorDialog(
                           Icons.arrow_forward_ios_rounded,
                           size: 16,
                         ),
+                        // In the onTap for the Icon Picker ListTile
                         onTap: () async {
-                          IconPickerIcon?
-                          icon = await FlutterIconPicker.showIconPicker(
-                            context,
-                            configuration: SinglePickerConfiguration(
-                              iconPackModes: [
-                                IconPack.material,
-                                IconPack.cupertino,
-                                IconPack.allMaterial,
-                              ], // Include multiple packs for variety, including emojis if supported
-                            ),
-                          );
-                          if (icon != null) {
-                            setState(() => selectedIcon = icon.data);
+                          try {
+                            IconPickerIcon? icon = await showIconPicker(
+                              context,
+                            );
+
+                            if (icon != null) {
+                              setState(() => selectedIcon = icon);
+                            } else {
+                              // Optional: Show a message if no icon is selected
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No icon selected'),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error loading icon picker: $e'),
+                              ),
+                            );
                           }
                         },
                       ),
@@ -152,18 +162,6 @@ Future<void> showCategoryEditorDialog(
                                   pickerColor: selectedColor,
                                   onColorChanged: (color) =>
                                       setState(() => selectedColor = color),
-                                  availableColors: const [
-                                    Colors.red,
-                                    Colors.green,
-                                    Colors.blue,
-                                    Colors.yellow,
-                                    Colors.orange,
-                                    Colors.purple,
-                                    Colors.pink,
-                                    Colors.teal,
-                                    Colors.indigo,
-                                    Colors.brown,
-                                  ], // Limit to common colors for better UX
                                 ),
                                 actions: [
                                   TextButton(
@@ -192,7 +190,7 @@ Future<void> showCategoryEditorDialog(
                       children: [
                         CircleAvatar(
                           backgroundColor: selectedColor,
-                          child: Icon(selectedIcon, color: Colors.white),
+                          child: Icon(selectedIcon?.data, color: Colors.white),
                         ),
                         const SizedBox(width: 16),
                         Text(
@@ -236,11 +234,10 @@ Future<void> showCategoryEditorDialog(
                 );
                 return;
               }
+              ;
               final newCategory = Category(
                 name: nameController.text.trim(),
-                icon:
-                    selectedIcon?.codePoint.toString() ??
-                    Icons.category.codePoint.toString(),
+                icon: serializeIcon(selectedIcon!),
                 color:
                     '#${selectedColor.value.toRadixString(16).padLeft(8, '0').substring(2)}',
               );
