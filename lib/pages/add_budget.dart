@@ -1,9 +1,13 @@
 import 'package:budgget_buddy/core/config.dart';
+import 'package:budgget_buddy/models/category.dart';
 import 'package:budgget_buddy/models/transaction.dart';
+import 'package:budgget_buddy/provider/category_provider.dart';
 import 'package:budgget_buddy/provider/transaction_provider.dart';
 import 'package:budgget_buddy/widgets/budget_list.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_iconpicker/Serialization/icondata_serialization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,8 +23,10 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
   final _amountController = TextEditingController();
   final _focusNode = FocusNode();
   final _amountFocusNode = FocusNode();
+  final _categoryFocusNode = FocusNode();
   final Uuid _uuid = Uuid();
   bool _isPositive = false;
+  Category? _selectedCategory;
 
   @override
   void initState() {
@@ -62,12 +68,14 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
     Transaction trans = Transaction(
       title: title,
       amount: signedAmt,
+      category: _selectedCategory,
       date: DateTime.now(),
       id: id,
     );
 
     _titleController.clear();
     _amountController.clear();
+    _selectedCategory = null;
     ref.read(transactionListProvider.notifier).addTransaction(trans);
   }
 
@@ -121,31 +129,29 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
               padding: EdgeInsets.only(bottom: bottomPadding),
               child: Row(
                 children: [
-                  Expanded(
+                  Flexible(
                     flex: 2,
                     child: TextField(
                       focusNode: _focusNode,
                       controller: _titleController,
                       decoration: const InputDecoration(
-                        hintText: 'Description',
+                        hintText: 'Title',
                         prefixIcon: Icon(Icons.description_outlined),
                       ),
                       onSubmitted: (_) => _amountFocusNode.requestFocus(),
                     ),
                   ),
-
-                  const SizedBox(width: 10),
-
-                  Expanded(
+                  const SizedBox(width: 4),
+                  Flexible(
                     flex: 1,
                     child: TextField(
                       focusNode: _amountFocusNode,
                       controller: _amountController,
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
-                        if (value.startsWith('-')) {
-                          _isPositive = !_isPositive;
-                        }
+                        setState(() {
+                          _isPositive = !value.startsWith('-');
+                        });
                       },
                       decoration: InputDecoration(
                         hintText: 'Amount',
@@ -183,11 +189,106 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                           ),
                         ),
                       ),
-                      onSubmitted: (_) => _addTransaction(),
+                      onSubmitted: (_) {
+                        FocusScope.of(context).requestFocus(_categoryFocusNode);
+                        Future.delayed(const Duration(milliseconds: 150), () {
+                          final dropdown = _categoryFocusNode.context
+                              ?.findRenderObject();
+                          if (dropdown != null) {
+                            GestureBinding.instance.handlePointerEvent(
+                              PointerDownEvent(position: Offset.zero),
+                            );
+                          }
+                        });
+                      },
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    flex: 1,
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        final categories = ref.watch(categoryListProvider);
+                        final selectedColor = _selectedCategory != null
+                            ? Color(
+                                int.parse(
+                                  '0xff${_selectedCategory!.color.replaceFirst('#', '')}',
+                                ),
+                              )
+                            : Colors.grey;
+                        final dropdownKey = GlobalKey();
 
-                  const SizedBox(width: 10),
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: selectedColor, width: 2),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Category?>(
+                              key: dropdownKey,
+
+                              value: _selectedCategory,
+                              isExpanded: true,
+                              hint: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.category_outlined,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Category',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              items: categories.isEmpty
+                                  ? [
+                                      const DropdownMenuItem(
+                                        value: null,
+                                        child: Text('No categories available'),
+                                      ),
+                                    ]
+                                  : categories.map((cat) {
+                                      return DropdownMenuItem(
+                                        value: cat,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              deserializeIcon(cat.icon)?.data ??
+                                                  Icons.category,
+                                              color: Color(
+                                                int.parse(
+                                                  '0xff${cat.color.replaceFirst('#', '')}',
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                cat.name,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                              onChanged: (newValue) {
+                                setState(() {
+                                  _selectedCategory = newValue;
+                                });
+                                _addTransaction();
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),

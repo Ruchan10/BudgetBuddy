@@ -1,3 +1,4 @@
+import 'package:budgget_buddy/core/snackbar.dart';
 import 'package:budgget_buddy/models/category.dart';
 import 'package:budgget_buddy/provider/category_provider.dart';
 import 'package:flutter/material.dart';
@@ -111,17 +112,15 @@ Future<void> showCategoryEditorDialog(
                               setState(() => selectedIcon = icon);
                             } else {
                               // Optional: Show a message if no icon is selected
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No icon selected'),
-                                ),
+                              showSnackBar(
+                                context: context,
+                                message: 'No icon selected',
                               );
                             }
                           } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error loading icon picker: $e'),
-                              ),
+                            showSnackBar(
+                              context: context,
+                              message: 'Error loading icon picker: $e',
                             );
                           }
                         },
@@ -229,9 +228,7 @@ Future<void> showCategoryEditorDialog(
             label: Text(isEditing ? 'Update' : 'Add'),
             onPressed: () {
               if (nameController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Name is required')),
-                );
+                showSnackBar(context: context, message: 'Name is required');
                 return;
               }
               ;
@@ -244,25 +241,21 @@ Future<void> showCategoryEditorDialog(
               try {
                 final notifier = ref.read(categoryListProvider.notifier);
                 if (isEditing) {
-                  notifier.updateCategory(newCategory);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Category updated successfully'),
-                    ),
+                  notifier.updateCategory(newCategory, context);
+                  showSnackBar(
+                    context: context,
+                    message: 'Category updated successfully',
                   );
                 } else {
-                  notifier.addCategory(newCategory);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Category added successfully'),
-                    ),
+                  notifier.addCategory(newCategory, context);
+                  showSnackBar(
+                    context: context,
+                    message: 'Category added successfully',
                   );
                 }
                 Navigator.of(context).pop();
               } catch (e) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                showSnackBar(context: context, message: 'Error: $e');
               }
             },
           ),

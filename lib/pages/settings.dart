@@ -105,13 +105,25 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
           const Divider(),
 
-          ExpansionTile(
-            title: const Text(
-              'Categories',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // List of categories with cards for better UI
+              ListTile(
+                title: const Text(
+                  'Categories',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                trailing: ElevatedButton(
+                  onPressed: () => showCategoryEditorDialog(context, ref),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: const Icon(Icons.add),
+                ),
+              ),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -153,9 +165,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               ref
                                   .read(categoryListProvider.notifier)
                                   .deleteCategory(cat.name);
-                              Navigator.of(context).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Category deleted')),
+                              showSnackBar(
+                                context: context,
+                                message: 'Category deleted',
                               );
                             },
                           ),
@@ -164,20 +176,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                   );
                 },
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () => showCategoryEditorDialog(context, ref),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add New Category'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
               ),
             ],
           ),

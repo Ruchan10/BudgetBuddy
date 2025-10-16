@@ -1,4 +1,4 @@
-
+import 'package:budgget_buddy/core/snackbar.dart';
 import 'package:budgget_buddy/core/user_shared_prefs.dart';
 import 'package:budgget_buddy/models/category.dart';
 import 'package:flutter/material.dart';
@@ -21,25 +21,29 @@ class CategoryNotifier extends StateNotifier<List<Category>> {
     state = list;
   }
 
-bool _isNameUnique(String name) {
-  return state.every((cat) => cat.name != name);
-}
-
-  Future<void> addCategory(Category cat) async {
-      if (!_isNameUnique(cat.name)) {
-    throw Exception('Category name must be unique');
+  bool _isNameUnique(String name) {
+    return state.every((cat) => cat.name != name);
   }
+
+  Future<void> addCategory(Category cat, BuildContext context) async {
+    if (!_isNameUnique(cat.name)) {
+      showSnackBar(context: context, message: 'Category name must be unique');
+      return;
+    }
     final prefs = UserSharedPrefs();
     await prefs.saveCategoryList([...state, cat]);
     await _loadCategories();
   }
 
-  Future<void> updateCategory(Category cat) async {
-      if (!_isNameUnique(cat.name)) {
-    throw Exception('Category name must be unique');
-  }
+  Future<void> updateCategory(Category cat, BuildContext context) async {
+    if (!_isNameUnique(cat.name)) {
+      showSnackBar(context: context, message: 'Category name must be unique');
+      return;
+    }
     final prefs = UserSharedPrefs();
-    await prefs.saveCategoryList(state.map((c) => c.name == cat.name ? cat : c).toList());
+    await prefs.saveCategoryList(
+      state.map((c) => c.name == cat.name ? cat : c).toList(),
+    );
     await _loadCategories();
   }
 

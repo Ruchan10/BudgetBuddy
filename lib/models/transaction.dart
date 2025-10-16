@@ -28,7 +28,9 @@ class Transaction {
     debugPrint('Transaction from JSON: ${json.toString()}');
     return Transaction(
       title: json['title'] as String,
-      category: json['category'] as Category?,
+      category: json['category'] != null
+          ? Category.fromJson(json['category'] as Map<String, dynamic>)
+          : null,
       amount: (json['amount'] as num).toDouble(),
       date: DateTime.parse(json['date'] as String),
       id: json['id'] as String?,
