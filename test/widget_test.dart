@@ -20,7 +20,7 @@ Flexible(
             PointerDownEvent(position: Offset.zero),
           );
         }
-      });
+      });z
     },
     decoration: InputDecoration(
       hintText: 'Amount',
