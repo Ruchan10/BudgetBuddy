@@ -1,66 +1,38 @@
-import 'dart:async';
-
 import 'package:budgget_buddy/core/config.dart';
-import 'package:budgget_buddy/core/listen_internet.dart';
 import 'package:budgget_buddy/core/routes.dart';
-import 'package:budgget_buddy/core/user_shared_prefs.dart';
-import 'package:budgget_buddy/widgets/update_manager.dart';
+import 'package:budgget_buddy/provider/settings_provider.dart';
+import 'package:budgget_buddy/provider/sync_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SplashView extends StatefulWidget {
+class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
 
   @override
-  State<SplashView> createState() => _SplashViewState();
+  ConsumerState<SplashView> createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView> {
-  bool _initialized = false;
-  final Completer<void> _navigationCompleter = Completer<void>();
-
+class _SplashViewState extends ConsumerState<SplashView> {
+  // The app works offline, so nothing here waits for the network.
   Future<void> _initializeApp() async {
-    await UserSharedPrefs.init();
-    if (_navigationCompleter.isCompleted) return;
-    _navigationCompleter.complete();
-    UpdateManager.checkForUpdates();
-    bool hasInternet = await NetworkService.checkNetwork();
-    if (hasInternet) {
-      Navigator.popAndPushNamed(context, AppRoute.navRoute);
-
-      // try {
-      //   final token = await UserSharedPrefs().getToken();
-      //   if (token.trim().isNotEmpty) {
-      //     if (!mounted) return;
-      //     Navigator.popAndPushNamed(context, AppRoute.addBudgetRoute);
-      //   } else {
-      //     if (!mounted) return;
-      //     Navigator.popAndPushNamed(context, AppRoute.loginRoute);
-      //   }
-      // } catch (e) {
-      //   if (!mounted) return;
-      //   Navigator.popAndPushNamed(context, AppRoute.loginRoute);
-      // }
-    } else {
-      if (!mounted) return;
-      Navigator.popAndPushNamed(context, AppRoute.noInternetRoute);
-    }
+    await ref.read(syncProvider.notifier).start();
+    if (!mounted) return;
+    final onboarded = ref.read(settingsProvider).onboardingComplete;
+    Navigator.pushReplacementNamed(
+      context,
+      onboarded ? AppRoute.navRoute : AppRoute.onboardingRoute,
+    );
   }
 
   @override
   void initState() {
     super.initState();
+    _initializeApp();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
-      UpdateManager.checkForUpdates();
-      _initializeApp();
-
-      _initialized = true;
-    }
-
     precacheImage(const AssetImage('assets/images/logo.webp'), context);
   }
 

@@ -32,10 +32,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
     defaultConfig {
         applicationId = "com.rk.budgetbuddy"
         minSdk = flutter.minSdkVersion
@@ -59,6 +55,13 @@ android {
             isShrinkResources = false
             signingConfig = signingConfigs.getByName("release")
         }
+    }
+}
+
+// Kotlin 2.2+ (required by current Flutter) no longer accepts `kotlinOptions`.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
     }
 }
 

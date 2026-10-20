@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:budgget_buddy/core/app_info.dart';
 import 'package:budgget_buddy/core/config.dart';
+import 'package:budgget_buddy/core/links.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 
 class UpdateManager {
   static const String _checkUrl =
@@ -12,19 +13,22 @@ class UpdateManager {
   static const String _releasesUrl =
       'https://api.github.com/repos/Ruchan10/BudgetBuddy/releases/latest';
   static const String _downloadUrlKey = 'url';
-  static bool _isChecking = false;
+  static Future<bool>? _inFlight;
 
-  static Future<void> checkForUpdates() async {
-    if (_isChecking) return;
-    _isChecking = true;
+  /// Returns true when a newer release is available.
+  static Future<bool> checkForUpdates() {
+    if (!AppInfo.updateCheckerEnabled) return Future.value(false);
+    return _inFlight ??= _check().whenComplete(() => _inFlight = null);
+  }
 
+  static Future<bool> _check() async {
     try {
       final versionResponse = await http
           .get(Uri.parse(_checkUrl))
           .timeout(const Duration(seconds: 10));
 
       if (versionResponse.statusCode != 200) {
-        return;
+        return false;
       }
 
       final versionData =
@@ -33,7 +37,7 @@ class UpdateManager {
 
       if (latestVersion == null ||
           !_isVersionHigher(Config.getAppVersion(), latestVersion)) {
-        return;
+        return false;
       }
 
       final releasesResponse = await http
@@ -41,7 +45,7 @@ class UpdateManager {
           .timeout(const Duration(seconds: 10));
 
       if (releasesResponse.statusCode != 200) {
-        return;
+        return false;
       }
 
       final releasesData =
@@ -50,8 +54,10 @@ class UpdateManager {
       Config.setupdateAvailable(true);
 
       _cacheUpdateInfo(versionData, releasesData);
-    } finally {
-      _isChecking = false;
+      return true;
+    } catch (e) {
+      debugPrint('Update check failed: $e');
+      return false;
     }
   }
 
@@ -69,7 +75,11 @@ class UpdateManager {
       builder: (context) => _UpdateDialog(
         latestVersion: Config.getCachedLatestVersion(),
         releaseNotes: Config.getCachedReleaseNotes(),
-        onDownload: () => _handleDownload(context),
+        onDownload: () async {
+          await openLink(_getDownloadUrl());
+          Config.setIsUpdateDialogopen(false);
+          navigator.pop();
+        },
         onCancel: () {
           Config.setIsUpdateDialogopen(false);
           navigator.pop();
@@ -78,32 +88,9 @@ class UpdateManager {
     );
   }
 
-  static Future<void> _handleDownload(BuildContext context) async {
-    try {
-      final url = await _getDownloadUrl();
-      await launchURL(Uri.parse(url));
-      Config.setIsUpdateDialogopen(false);
-      Navigator.of(context).pop();
-    } catch (e) {}
-  }
-
-  static Future<String> _getDownloadUrl() async {
+  static String _getDownloadUrl() {
     final versionData = Config.getCachedVersionData();
     return versionData[_downloadUrlKey]?.toString() ?? '';
-  }
-
-  static Future<void> launchURL(Uri url) async {
-    if (await canLaunchUrl(url)) {
-      await launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
-        webViewConfiguration: const WebViewConfiguration(
-          enableJavaScript: true,
-        ),
-      );
-    } else {
-      throw 'Could not launch $url';
-    }
   }
 
   static bool _isVersionHigher(String current, String latest) {

@@ -1,16 +1,36 @@
-# budgget_buddy
+# Budget Buddy
 
-A new Flutter project.
+A simple, private, offline-first budget tracker for Android.
 
-## Getting Started
+- **Quick entry**: type a title and an amount, that's it. The keyboard can open as soon as the app starts.
+- **Categories fill themselves in** on the device and learn from your corrections. Tap a category to change it.
+- **Works fully offline.** Optional sync with your own free [Supabase](https://supabase.com) project keeps several devices in step.
+- Current balance, grouped history with daily, monthly and yearly totals.
+- Light, dark or system theme. Any currency symbol, or none.
+- No ads, no tracking, no account required.
 
-This project is a starting point for a Flutter application.
+## Cloud sync (optional)
 
-A few resources to get you started if this is your first Flutter project:
+Everything the server side needs is in [`supabase/`](supabase):
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+| File | What it does |
+| --- | --- |
+| [`setup.sql`](supabase/setup.sql) | Tables, row level security and the sync function. Paste into Supabase > SQL Editor and run it. Safe to re-run. |
+| [`functions/categorize/index.ts`](supabase/functions/categorize/index.ts) | Optional Edge Function that fills in missing categories with Supabase's built-in `gte-small` model (no API key needed). |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+The app walks through the whole setup, with copy buttons, under
+**Settings > Setup guide**. Sync is last-write-wins per transaction; the app
+always reads and writes local data and syncs in the background when online.
+
+## Building
+
+```sh
+flutter build apk --release
+```
+
+F-Droid builds should leave out the GitHub update checker, since F-Droid
+delivers updates itself and signs APKs with its own key:
+
+```sh
+flutter build apk --release --dart-define=UPDATE_CHECKER=false
+```

@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Update checks and Supabase sync. Without it release builds have no network. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Budget Buddy"
         android:name="${applicationName}"

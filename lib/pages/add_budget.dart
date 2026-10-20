@@ -1,11 +1,12 @@
-import 'package:budgget_buddy/core/config.dart';
+import 'package:budgget_buddy/core/money.dart';
 import 'package:budgget_buddy/models/transaction.dart';
+import 'package:budgget_buddy/provider/settings_provider.dart';
+import 'package:budgget_buddy/provider/sync_provider.dart';
 import 'package:budgget_buddy/provider/transaction_provider.dart';
+import 'package:budgget_buddy/widgets/balance_dialog.dart';
 import 'package:budgget_buddy/widgets/budget_list.dart';
-import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 
 class AddBudgetPage extends ConsumerStatefulWidget {
   const AddBudgetPage({super.key});
@@ -19,56 +20,59 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
   final _amountController = TextEditingController();
   final _focusNode = FocusNode();
   final _amountFocusNode = FocusNode();
-  final Uuid _uuid = Uuid();
   bool _isPositive = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTransactions();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 5), () {
-        if (Config.getUpdateAvailable()) {
-          UpdateManager.showUpdateDialog(context);
-        }
-      });
-    });
-  }
-
-  Future<void> _loadTransactions() async {
-    // setState(() {
-    //   _transactions = transactions;
-    // });
-    // final prefs = UserSharedPrefs();
-    // await prefs.clearTransactionList();
-    _focusNode.requestFocus();
-  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _amountController.dispose();
+    _focusNode.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
+  }
+
+  // Typing "+" or "-" flips the sign instead of becoming part of the number.
+  void _onAmountChanged(String value) {
+    if (!value.contains(RegExp(r'[+-]'))) return;
+    setState(() => _isPositive = value.contains('+'));
+    final digits = value.replaceAll(RegExp(r'[+-]'), '');
+    _amountController.value = TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: digits.length),
+    );
   }
 
   Future<void> _addTransaction() async {
     final title = _titleController.text.trim();
-    final amt = double.tryParse(_amountController.text.trim());
-    if (amt == null) return;
-    final signedAmt = _isPositive ? amt : -amt;
-    final id = _uuid.v4();
-
-    if (title.isEmpty) return;
-    Transaction trans = Transaction(
-      title: title,
-      amount: signedAmt,
-      date: DateTime.now(),
-      id: id,
-    );
+    final amt = parseAmount(_amountController.text);
+    if (title.isEmpty) {
+      _focusNode.requestFocus();
+      return;
+    }
+    if (amt == null) {
+      _amountFocusNode.requestFocus();
+      return;
+    }
 
     _titleController.clear();
     _amountController.clear();
-    ref.read(transactionListProvider.notifier).addTransaction(trans);
+    // Ready for the next entry when the keyboard-first setting is on.
+    if (ref.read(settingsProvider).openKeyboardOnStart) {
+      _focusNode.requestFocus();
+    } else {
+      FocusScope.of(context).unfocus();
+    }
+
+    // The category is filled in automatically and can be changed later.
+    await ref
+        .read(transactionListProvider.notifier)
+        .addTransaction(
+          Transaction(
+            title: title,
+            amount: _isPositive ? amt.abs() : -amt.abs(),
+            date: DateTime.now(),
+          ),
+        );
   }
 
   @override
@@ -80,25 +84,50 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
       0.0,
       double.infinity,
     );
+    final transactions = ref.watch(transactionListProvider);
+    final settings = ref.watch(settingsProvider);
+    final balance =
+        settings.openingBalance +
+        transactions.fold(0.0, (s, t) => s + t.amount);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text(
-          'Budget',
-          style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+        title: InkWell(
+          onTap: () => showBalanceDialog(context, ref),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Balance',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
+                ),
+                Text(
+                  formatMoney(balance, settings.currencySymbol),
+                  style: TextStyle(
+                    color: balance < 0
+                        ? Colors.red
+                        : theme.textTheme.bodyLarge?.color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 2,
         centerTitle: true,
+        actions: const [_SyncStatusButton()],
       ),
       body: Column(
         children: [
-          Expanded(
-            child: GroupedTransactionsList(
-              transactions: ref.watch(transactionListProvider),
-            ),
-          ),
+          Expanded(child: GroupedTransactionsList(transactions: transactions)),
 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -126,8 +155,11 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                     child: TextField(
                       focusNode: _focusNode,
                       controller: _titleController,
+                      autofocus: settings.openKeyboardOnStart,
+                      textCapitalization: TextCapitalization.sentences,
+                      textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
-                        hintText: 'Description',
+                        hintText: 'Title',
                         prefixIcon: Icon(Icons.description_outlined),
                       ),
                       onSubmitted: (_) => _amountFocusNode.requestFocus(),
@@ -141,12 +173,12 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                     child: TextField(
                       focusNode: _amountFocusNode,
                       controller: _amountController,
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        if (value.startsWith('-')) {
-                          _isPositive = !_isPositive;
-                        }
-                      },
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      textInputAction: TextInputAction.done,
+                      onChanged: _onAmountChanged,
                       decoration: InputDecoration(
                         hintText: 'Amount',
                         prefixIcon: GestureDetector(
@@ -183,17 +215,64 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                           ),
                         ),
                       ),
-                      onSubmitted: (_) => _addTransaction(),
+                      // Handled here so the keyboard doesn't close between entries.
+                      onEditingComplete: _addTransaction,
                     ),
                   ),
 
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 6),
+
+                  IconButton.filled(
+                    tooltip: 'Add',
+                    onPressed: _addTransaction,
+                    icon: const Icon(Icons.check),
+                  ),
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Cloud icon showing whether everything has been synced. Tap to sync now.
+class _SyncStatusButton extends ConsumerWidget {
+  const _SyncStatusButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(syncProvider);
+    if (!sync.signedIn) return const SizedBox.shrink();
+    ref.watch(transactionListProvider);
+    final pending = ref
+        .read(transactionListProvider.notifier)
+        .hasPendingChanges;
+
+    final Widget icon;
+    final String tooltip;
+    if (sync.syncing) {
+      icon = const SizedBox.square(
+        dimension: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+      tooltip = 'Syncing…';
+    } else if (sync.error != null) {
+      icon = const Icon(Icons.sync_problem, color: Colors.orange);
+      tooltip = sync.error!;
+    } else if (pending) {
+      icon = const Icon(Icons.cloud_upload_outlined);
+      tooltip = 'Changes waiting to sync';
+    } else {
+      icon = const Icon(Icons.cloud_done_outlined);
+      tooltip = 'Synced';
+    }
+
+    return IconButton(
+      tooltip: tooltip,
+      icon: icon,
+      onPressed: () => ref.read(syncProvider.notifier).sync(),
     );
   }
 }

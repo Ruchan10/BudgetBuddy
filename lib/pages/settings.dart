@@ -1,7 +1,16 @@
+import 'package:budgget_buddy/core/app_info.dart';
 import 'package:budgget_buddy/core/config.dart';
+import 'package:budgget_buddy/core/links.dart';
+import 'package:budgget_buddy/core/money.dart';
+import 'package:budgget_buddy/core/routes.dart';
 import 'package:budgget_buddy/core/snackbar.dart';
-import 'package:budgget_buddy/main.dart';
-import 'package:budgget_buddy/provider/theme_provider.dart';
+import 'package:budgget_buddy/pages/cloud_sync.dart';
+import 'package:budgget_buddy/provider/settings_provider.dart';
+import 'package:budgget_buddy/provider/sync_provider.dart';
+import 'package:budgget_buddy/provider/transaction_provider.dart';
+import 'package:budgget_buddy/widgets/balance_dialog.dart';
+import 'package:budgget_buddy/widgets/currency_picker.dart';
+import 'package:budgget_buddy/widgets/theme_mode_selector.dart';
 import 'package:budgget_buddy/widgets/update_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,156 +23,289 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final _urlController = TextEditingController();
-  final _anonKeyController = TextEditingController();
-  final _serviceKeyController = TextEditingController();
+  bool _checkingForUpdate = false;
 
-  Widget _buildUpdateBtn(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: () => UpdateManager.showUpdateDialog(context),
-      icon: Icon(Icons.download_rounded),
-      label: Text('Update Available'),
-      style: FilledButton.styleFrom(backgroundColor: Colors.green),
-    );
+  Future<void> _checkForUpdates() async {
+    setState(() => _checkingForUpdate = true);
+    final available = await UpdateManager.checkForUpdates();
+    if (!mounted) return;
+    setState(() => _checkingForUpdate = false);
+    if (available) {
+      UpdateManager.showUpdateDialog(context);
+    } else {
+      showSnackBar(context: context, message: 'App is already up to date');
+    }
   }
 
-  Widget _buildNoUpdateBtn(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        UpdateManager.checkForUpdates();
-        if (Config.getUpdateAvailable()) {
-          UpdateManager.showUpdateDialog(context);
-        } else {
-          showSnackBar(context: context, message: 'App is already up to date');
-        }
-      },
-      child: Row(
-        spacing: 16,
-        children: [
-          Icon(Icons.check_circle_rounded, color: Colors.green),
-          Text(
-            'App is up to date',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
+  Future<void> _pickCurrency(String current) async {
+    var symbol = current;
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Currency symbol'),
+        content: SingleChildScrollView(
+          child: StatefulBuilder(
+            builder: (context, setDialogState) => CurrencyPicker(
+              value: symbol,
+              onChanged: (value) => setDialogState(() => symbol = value),
             ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, symbol),
+            child: const Text('Save'),
           ),
         ],
       ),
     );
+    if (picked == null) return;
+    await ref
+        .read(settingsProvider.notifier)
+        .update((s) => s.copyWith(currencySymbol: picked));
+  }
+
+  Future<void> _categorizeExisting() async {
+    final changed = await ref
+        .read(transactionListProvider.notifier)
+        .categorizeUncategorized();
+    if (!mounted) return;
+    showSnackBar(
+      context: context,
+      message: changed == 0
+          ? 'No new categories found'
+          : 'Categorized $changed transaction${changed == 1 ? '' : 's'}',
+    );
+    // Lets the optional AI function look at whatever is still uncategorized.
+    ref.read(syncProvider.notifier).sync();
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeProvider);
-    final isDark = themeMode == ThemeMode.dark;
-    final updateAvailable = Config.getUpdateAvailable();
+    final theme = Theme.of(context);
+    final settings = ref.watch(settingsProvider);
+    final sync = ref.watch(syncProvider);
+    final transactions = ref.watch(transactionListProvider);
+    final balance =
+        settings.openingBalance +
+        transactions.fold(0.0, (s, t) => s + t.amount);
+    final notifier = ref.read(settingsProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Settings"),
-        backgroundColor: isDark
-            ? AppColors.darkPrimary
-            : AppColors.lightPrimary,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        centerTitle: true,
       ),
 
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.only(bottom: 24),
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: updateAvailable
-                ? _buildUpdateBtn(context)
-                : _buildNoUpdateBtn(context),
+          const _SectionHeader('Appearance'),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ThemeModeSelector(),
           ),
-          const Divider(),
 
-          SwitchListTile(
-            secondary: Icon(
-              Icons.brightness_6,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+          const _SectionHeader('Money'),
+          ListTile(
+            leading: const Icon(Icons.currency_exchange),
+            title: const Text('Currency symbol'),
+            subtitle: Text(
+              settings.currencySymbol.isEmpty
+                  ? 'Hidden'
+                  : settings.currencySymbol,
             ),
-            title: Text(
-              "Dark Mode",
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
+            onTap: () => _pickCurrency(settings.currencySymbol),
+          ),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined),
+            title: const Text('Current balance'),
+            subtitle: Text(formatMoney(balance, settings.currencySymbol)),
+            onTap: () => showBalanceDialog(context, ref),
+          ),
+
+          const _SectionHeader('Transactions'),
+          SwitchListTile(
+            secondary: const Icon(Icons.keyboard_outlined),
+            title: const Text('Open keyboard on start'),
+            subtitle: const Text('Start typing a new entry right away'),
+            value: settings.openKeyboardOnStart,
+            onChanged: (value) =>
+                notifier.update((s) => s.copyWith(openKeyboardOnStart: value)),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.auto_awesome_outlined),
+            title: const Text('Auto-categorize'),
+            subtitle: const Text(
+              'Guesses a category on this device and learns from your changes',
+            ),
+            value: settings.autoCategorize,
+            onChanged: (value) =>
+                notifier.update((s) => s.copyWith(autoCategorize: value)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.label_outline),
+            title: const Text('Categorize existing transactions'),
+            subtitle: const Text('Fill in categories that are still empty'),
+            onTap: _categorizeExisting,
+          ),
+
+          const _SectionHeader('Cloud sync'),
+          ListTile(
+            leading: Icon(
+              sync.error != null
+                  ? Icons.sync_problem
+                  : sync.signedIn
+                  ? Icons.cloud_done_outlined
+                  : Icons.cloud_off_outlined,
+            ),
+            title: const Text('Sync with Supabase'),
+            subtitle: Text(describeSyncState(sync)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.pushNamed(context, AppRoute.cloudSyncRoute),
+          ),
+          ListTile(
+            leading: const Icon(Icons.menu_book_outlined),
+            title: const Text('Setup guide'),
+            subtitle: const Text('Step by step, with copy-paste SQL'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () =>
+                Navigator.pushNamed(context, AppRoute.supabaseGuideRoute),
+          ),
+
+          if (AppInfo.updateCheckerEnabled) ...[
+            const _SectionHeader('Updates'),
+            SwitchListTile(
+              secondary: const Icon(Icons.update),
+              title: const Text('Check for updates on start'),
+              subtitle: const Text('Looks for new releases on GitHub'),
+              value: settings.checkUpdatesOnStart,
+              onChanged: (value) => notifier.update(
+                (s) => s.copyWith(checkUpdatesOnStart: value),
               ),
             ),
-            value: isDark,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).toggleTheme(value);
-            },
-          ),
+            ListTile(
+              leading: Icon(
+                Config.getUpdateAvailable()
+                    ? Icons.download_rounded
+                    : Icons.system_update_outlined,
+                color: Config.getUpdateAvailable() ? Colors.green : null,
+              ),
+              title: Text(
+                Config.getUpdateAvailable()
+                    ? 'Update available'
+                    : 'Check for updates now',
+              ),
+              subtitle: Text('Installed: ${Config.getAppVersion()}'),
+              trailing: _checkingForUpdate
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : null,
+              onTap: _checkingForUpdate
+                  ? null
+                  : Config.getUpdateAvailable()
+                  ? () => UpdateManager.showUpdateDialog(context)
+                  : _checkForUpdates,
+            ),
+          ],
 
-          const Divider(),
-
-          Text(
-            "Sync Across Devices",
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
+          const _SectionHeader('Support'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              '${AppInfo.name} is free and has no ads or tracking. '
+              'If it helps you, you can support its development.',
+              style: theme.textTheme.bodyMedium,
             ),
           ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _urlController,
-            decoration: InputDecoration(
-              labelText: "Project URL",
-              prefixIcon: Icon(Icons.link),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final link in AppInfo.donationLinks)
+                  FilledButton.tonalIcon(
+                    onPressed: () => openLink(link.url),
+                    icon: const Icon(Icons.favorite_outline),
+                    label: Text(link.label),
+                  ),
+                OutlinedButton.icon(
+                  onPressed: () => openLink(AppInfo.repoUrl),
+                  icon: const Icon(Icons.star_outline),
+                  label: const Text('Star on GitHub'),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
 
-          TextField(
-            controller: _anonKeyController,
-            decoration: InputDecoration(
-              labelText: "Anon Key",
-              prefixIcon: Icon(Icons.vpn_key),
+          const _SectionHeader('About'),
+          ListTile(
+            leading: Image.asset('assets/images/logo.webp', width: 40),
+            title: const Text(AppInfo.name),
+            subtitle: Text(
+              'Version ${Config.getAppVersion()}\n'
+              'A simple, private, offline-first budget tracker.',
             ),
-            obscureText: true,
+            isThreeLine: true,
           ),
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _serviceKeyController,
-            decoration: InputDecoration(
-              labelText: "Service Role Key",
-              prefixIcon: Icon(Icons.admin_panel_settings),
+          ListTile(
+            leading: const Icon(Icons.code),
+            title: const Text('Source code'),
+            subtitle: Text(AppInfo.repoUrl.replaceFirst('https://', '')),
+            onTap: () => openLink(AppInfo.repoUrl),
+          ),
+          ListTile(
+            leading: const Icon(Icons.bug_report_outlined),
+            title: const Text('Report a problem'),
+            onTap: () => openLink(AppInfo.issuesUrl),
+          ),
+          ListTile(
+            leading: const Icon(Icons.article_outlined),
+            title: const Text('Open-source licenses'),
+            onTap: () => showLicensePage(
+              context: context,
+              applicationName: AppInfo.name,
+              applicationVersion: Config.getAppVersion(),
             ),
-            obscureText: true,
           ),
-          const SizedBox(height: 16),
-
-          FilledButton.icon(
-            onPressed: () {
-              showSnackBar(
-                context: context,
-                message: "Attempting to sync with Supabase...",
-              );
-            },
-            icon: Icon(Icons.cloud_upload),
-            label: Text("Sign Up & Sync"),
-          ),
-
-          const SizedBox(height: 12),
-
-          Text(
-            "To sync data across devices, enter your Supabase Project URL and keys. "
-            "Follow this guide",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Made by ${AppInfo.developer}',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+      child: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

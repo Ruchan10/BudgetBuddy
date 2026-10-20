@@ -1,8 +1,13 @@
+import 'package:budgget_buddy/core/money.dart';
+import 'package:budgget_buddy/models/category.dart';
 import 'package:budgget_buddy/models/transaction.dart';
+import 'package:budgget_buddy/provider/transaction_provider.dart';
+import 'package:budgget_buddy/widgets/category_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class EditTransactionDialog extends StatefulWidget {
+class EditTransactionDialog extends ConsumerStatefulWidget {
   final Transaction transaction;
   final void Function(Transaction updatedTx) onSave;
 
@@ -13,15 +18,17 @@ class EditTransactionDialog extends StatefulWidget {
   });
 
   @override
-  State<EditTransactionDialog> createState() => _EditTransactionDialogState();
+  ConsumerState<EditTransactionDialog> createState() =>
+      _EditTransactionDialogState();
 }
 
-class _EditTransactionDialogState extends State<EditTransactionDialog>
+class _EditTransactionDialogState extends ConsumerState<EditTransactionDialog>
     with SingleTickerProviderStateMixin {
   late TextEditingController _titleController;
   late TextEditingController _subDescriptionController;
   late TextEditingController _amountController;
   late DateTime _selectedDate;
+  late String? _category;
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
 
@@ -36,6 +43,7 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
       text: widget.transaction.amount.toString(),
     );
     _selectedDate = widget.transaction.date;
+    _category = widget.transaction.category;
 
     _animationController = AnimationController(
       vsync: this,
@@ -69,15 +77,24 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
     }
   }
 
+  Future<void> _pickCategory() async {
+    final category = await showCategoryPicker(
+      context,
+      current: _category,
+      custom: ref.read(customCategoriesProvider),
+    );
+    if (category != null) setState(() => _category = category);
+  }
+
   void _save() {
     final updatedTx = widget.transaction.copyWith(
       title: _titleController.text.trim(),
       description: _subDescriptionController.text.trim() == ''
           ? null
           : _subDescriptionController.text.trim(),
-      amount:
-          double.tryParse(_amountController.text) ?? widget.transaction.amount,
+      amount: parseAmount(_amountController.text) ?? widget.transaction.amount,
       date: _selectedDate,
+      category: _category,
     );
     widget.onSave(updatedTx);
     Navigator.of(context).pop();
@@ -140,10 +157,44 @@ class _EditTransactionDialogState extends State<EditTransactionDialog>
                       ),
                     ),
                     const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 12,
+                          ),
+                          alignment: Alignment.centerLeft,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          side: BorderSide(color: theme.dividerColor),
+                        ),
+                        onPressed: _pickCategory,
+                        icon: Icon(
+                          _category == null
+                              ? Icons.label_outline
+                              : Categories.of(_category!).icon,
+                          color: _category == null
+                              ? null
+                              : Categories.of(_category!).color,
+                        ),
+                        label: Text(
+                          _category ?? 'Choose a category',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: _amountController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
+                        signed: true,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Amount',
