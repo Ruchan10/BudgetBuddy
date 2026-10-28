@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:budgget_buddy/core/money.dart';
 import 'package:budgget_buddy/services/supabase_credentials.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 String fakeJwt(Map<String, dynamic> payload) =>
@@ -26,6 +27,54 @@ void main() {
       expect(parseAmount('-5'), -5);
       expect(parseAmount('abc'), isNull);
       expect(parseAmount(''), isNull);
+    });
+  });
+
+  group('SignKeyFormatter', () {
+    TextEditingValue typed(String text, [int? cursor]) => TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: cursor ?? text.length),
+    );
+
+    test('reports sign keys and keeps them out of the number', () {
+      final keys = <String>[];
+      final formatter = SignKeyFormatter(onSignKey: keys.add);
+      final result = formatter.formatEditUpdate(typed('12'), typed('12-'));
+      expect(result.text, '12');
+      expect(result.selection.baseOffset, 2);
+      expect(
+        formatter.formatEditUpdate(typed('12'), typed('+12', 1)).text,
+        '12',
+      );
+      expect(keys, ['-', '+']);
+      expect(formatter.formatEditUpdate(typed('1'), typed('12')).text, '12');
+      expect(keys, hasLength(2));
+    });
+
+    test('toggles a leading minus when the sign is in the text', () {
+      const formatter = SignKeyFormatter();
+      final negative = formatter.formatEditUpdate(
+        typed('250'),
+        typed('25-0', 3),
+      );
+      expect(negative.text, '-250');
+      expect(negative.selection.baseOffset, 3);
+      expect(
+        formatter.formatEditUpdate(typed('-250'), typed('-250-')).text,
+        '250',
+      );
+      expect(
+        formatter.formatEditUpdate(typed('-250'), typed('-250+')).text,
+        '250',
+      );
+      expect(
+        formatter.formatEditUpdate(typed('250'), typed('250+')).text,
+        '250',
+      );
+      expect(
+        formatter.formatEditUpdate(typed('-250'), typed('250', 0)).text,
+        '250',
+      );
     });
   });
 

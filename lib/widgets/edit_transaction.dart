@@ -196,6 +196,7 @@ class _EditTransactionDialogState extends ConsumerState<EditTransactionDialog>
                         decimal: true,
                         signed: true,
                       ),
+                      inputFormatters: const [SignKeyFormatter()],
                       decoration: InputDecoration(
                         labelText: 'Amount',
                         filled: true,

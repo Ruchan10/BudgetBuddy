@@ -31,16 +31,9 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
     super.dispose();
   }
 
-  // Typing "+" or "-" flips the sign instead of becoming part of the number.
-  void _onAmountChanged(String value) {
-    if (!value.contains(RegExp(r'[+-]'))) return;
-    setState(() => _isPositive = value.contains('+'));
-    final digits = value.replaceAll(RegExp(r'[+-]'), '');
-    _amountController.value = TextEditingValue(
-      text: digits,
-      selection: TextSelection.collapsed(offset: digits.length),
-    );
-  }
+  // The numpad's "-" key flips the sign; "+" makes it positive.
+  void _onSignKey(String key) =>
+      setState(() => _isPositive = key == '+' || !_isPositive);
 
   Future<void> _addTransaction() async {
     final title = _titleController.text.trim();
@@ -178,7 +171,9 @@ class AddBudgetPageState extends ConsumerState<AddBudgetPage> {
                         signed: true,
                       ),
                       textInputAction: TextInputAction.done,
-                      onChanged: _onAmountChanged,
+                      inputFormatters: [
+                        SignKeyFormatter(onSignKey: _onSignKey),
+                      ],
                       decoration: InputDecoration(
                         hintText: 'Amount',
                         prefixIcon: GestureDetector(
